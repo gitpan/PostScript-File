@@ -22,7 +22,7 @@ my $page = $ps->get_page_label();
 ok($page, "1");
 ok($ps->get_page());
 
-my $name = "02eps";
+my $name = "fi02eps";
 $ps->output( $name, "test-results" );
 ok(1); # survived so far
 my $file = check_file( "$name.epsf", "test-results" );

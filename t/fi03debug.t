@@ -34,7 +34,7 @@ my $page = $ps->get_page_label();
 ok($page, "1");
 ok($ps->get_page());
 
-my $name = "03debug";
+my $name = "fi03debug";
 $ps->output( $name, "test-results" );
 ok(1); # survived so far
 my $file = check_file( "$name.ps", "test-results" );

@@ -38,7 +38,7 @@ $ps->add_to_page( <<END_PAGE2 );
     ($msg) show
 END_PAGE2
 
-my $name = "04pages";
+my $name = "fi04pages";
 $ps->output( $name, "test-results" );
 my $file = check_file( "$name.ps", "test-results" );
 ok(-e $file);
