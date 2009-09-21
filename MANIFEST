@@ -7,3 +7,4 @@ t/fi01simple.t
 t/fi02eps.t
 t/fi03debug.t
 t/fi04pages.t
+META.yml                                 Module meta-data (added by MakeMaker)
