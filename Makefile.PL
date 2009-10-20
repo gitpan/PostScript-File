@@ -1,28 +1,22 @@
+
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
 
-my %parms = (
-    NAME		=> 'PostScript::File',
-    ABSTRACT_FROM	=> 'File.pm',
-#   AUTHOR		=> 'Christopher Willmot <chris@willmot.co.uk>',
-    AUTHOR		=> 'Christopher J. Madsen <perl@cjmweb.net>',
-    VERSION_FROM	=> 'File.pm',
-    PREREQ_PM		=> { File::Spec => 0,
-			     Sys::Hostname => 0 },
+WriteMakefile(
+  DISTNAME  => 'PostScript-File',
+  NAME      => 'PostScript::File',
+  AUTHOR    => "Christopher\ Willmot\ \<chris\@willmot\.co\.uk\>\,\ Christopher\ J\.\ Madsen\ \<perl\@cjmweb\.net\>",
+  ABSTRACT  => "Base\ class\ for\ creating\ Adobe\ PostScript\ files",
+  VERSION   => '1.03',
+  EXE_FILES => [ qw() ],
+  (eval { ExtUtils::MakeMaker->VERSION(6.31) } ? (LICENSE => 'perl') : ()),
+  PREREQ_PM    => {
+    "File::Spec" => '0',
+    "File::Temp" => '0',
+    "Sys::Hostname" => '0',
+  },
+  test => {TESTS => 't/*.t'}
 );
 
-if ($ExtUtils::MakeMaker::VERSION ge '6.30') {
-  $parms{LICENSE} = 'perl';
-}
-
-if ($ExtUtils::MakeMaker::VERSION ge '6.46') {
-  $parms{META_MERGE} = {
-    resources => {
-      bugtracker  =>
-        'http://rt.cpan.org/Public/Dist/Display.html?Name=PostScript-File',
-      license     => 'http://dev.perl.org/licenses/',
-      repository  => 'git://github.com/madsen/postscript-file.git',
-    }
-  };
-} # end if MakeMaker 6.46
-
-WriteMakefile(%parms);

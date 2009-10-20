@@ -1,13 +1,14 @@
 package PostScript::File;
-our $VERSION = 1.02;
+our $VERSION = '1.03';
+use 5.008;
 use strict;
 use warnings;
 use File::Spec;
 use Sys::Hostname;
-require Exporter;
-our @ISA = qw(Exporter);
+use Exporter 'import';
 
-our @EXPORT_OK = qw(check_tilde check_file incpage_label incpage_roman array_as_string str);
+our @EXPORT_OK = qw(check_tilde check_file incpage_label incpage_roman
+                    array_as_string pstr str);
 
 # Prototypes for functions only
  sub incpage_label ($);
@@ -22,6 +23,12 @@ my $rmcomment = qr(^\s+\(% .*\)?)m; # remove single line comments
 =head1 NAME
 
 PostScript::File - Base class for creating Adobe PostScript files
+
+=head1 VERSION
+
+This document describes version 1.03 of PostScript::File,
+released October 20, 2009.
+
 
 =head1 SYNOPSIS
 
@@ -255,8 +262,8 @@ sub new {
     $o->{png}   = defined($opt->{png})  ? $opt->{png}  : 0;
     $o->{gs}    = defined($opt->{gs})   ? $opt->{gs}   : 'gs';
     $o->{eps}   = defined($opt->{eps})  ? $opt->{eps}  : 0;
-    $o->{file}  = defined($opt->{file}) ? $opt->{file} : "";
-    $o->{dir}   = defined($opt->{dir})  ? $opt->{dir}  : "";
+    $o->{file_ext} = $opt->{file_ext};
+    $o->set_filename(@$opt{qw(file dir)});
     $o->set_paper( $opt->{paper} );
     $o->set_width( $opt->{width} );
     $o->set_height( $opt->{height} );
@@ -410,14 +417,29 @@ Set whether printing will be clipped to the file's bounding box. (Default: 0)
 =head3 dir
 
 An optional directory for the output file.  See </set_filename>.
+If no C<file> is specified, C<dir> is ignored.
 
 =head3 eps
 
 Set to 1 to produce Encapsulated PostScript.  B<get_eps> returns the value set here.  (Default: 0)
 
+=head3 png
+
+Set to 1 to produce a PNG image instead of PostScript code.  (Default: 0)
+Requires Ghostscript (L<http://pages.cs.wisc.edu/~ghost/>).
+
+=head3 gs
+
+The pathname of the Ghostscript application.  (Default: gs)
+Relevant only if PNG output is selected.
+
 =head3 file
 
 The name of the output file.  See </set_filename>.
+
+=head3 file_ext
+
+The extension for the output file.  See </set_file_ext>.
 
 =head3 font_suffix
 
@@ -767,26 +789,6 @@ END_TITLES
 END_PS_ONLY
     }
 
-    $o->{title} = "($filename)" unless $o->{title};
-    $postscript .= $o->{Comments} if ($o->{Comments});
-    $postscript .= "\%\%Orientation: ${\( $o->{landscape} ? 'Landscape' : 'Portrait' )}\n";
-    $postscript .= "\%\%DocumentSuppliedResources:\n$o->{DocSupplied}" if ($o->{DocSupplied});
-    $postscript .= "\%\%Title: $o->{title}\n";
-    $postscript .= "\%\%Version: $o->{version}\n" if ($o->{version});
-    $postscript .= "\%\%Pages: $o->{pagecount}\n" if ((not $o->{eps}) and ($o->{pagecount} > 1));
-    $postscript .= "\%\%Order: $o->{order}\n" if ((not $o->{eps}) and ($o->{order}));
-    $postscript .= "\%\%Extensions: $o->{extensions}\n" if ($o->{extensions});
-    $postscript .= "\%\%LanguageLevel: $o->{langlevel}\n" if ($o->{langlevel});
-    $postscript .= "\%\%EndComments\n";
-
-    $postscript .= $o->{Preview} if ($o->{Preview});
-
-    ($postscript .= <<END_DEFAULTS) =~ s/$o->{strip}//gm if ($o->{Defaults});
-        \%\%BeginDefaults
-            $o->{Defaults}
-        \%\%EndDefaults
-END_DEFAULTS
-
     my $landscapefn = "";
     ($landscapefn .= <<END_LANDSCAPE) =~ s/$o->{strip}//gm if ($landscape);
                 % Rotate page 90 degrees
@@ -1032,7 +1034,7 @@ END_DEBUG_OFF
 
     my $supplied = "";
     if ($landscapefn or $clipfn or $errorfn or $debugfn) {
-        $o->{DocSupplied} .= "\%\%+ PostScript_File\n";
+        $o->{DocSupplied} .= "\%\%+ procset PostScript_File\n";
         ($supplied .= <<END_DOC_SUPPLIED) =~ s/$o->{strip}//gm;
             \%\%BeginProcSet: PostScript_File
                 $landscapefn
@@ -1042,6 +1044,26 @@ END_DEBUG_OFF
             \%\%EndProcSet
 END_DOC_SUPPLIED
     }
+
+    $o->{title} = "($filename)" unless $o->{title};
+    $postscript .= $o->{Comments} if ($o->{Comments});
+    $postscript .= "\%\%Orientation: ${\( $o->{landscape} ? 'Landscape' : 'Portrait' )}\n";
+    $postscript .= "\%\%DocumentSuppliedResources:\n$o->{DocSupplied}" if ($o->{DocSupplied});
+    $postscript .= "\%\%Title: $o->{title}\n";
+    $postscript .= "\%\%Version: $o->{version}\n" if ($o->{version});
+    $postscript .= "\%\%Pages: $o->{pagecount}\n" if ((not $o->{eps}) and ($o->{pagecount} > 1));
+    $postscript .= "\%\%Order: $o->{order}\n" if ((not $o->{eps}) and ($o->{order}));
+    $postscript .= "\%\%Extensions: $o->{extensions}\n" if ($o->{extensions});
+    $postscript .= "\%\%LanguageLevel: $o->{langlevel}\n" if ($o->{langlevel});
+    $postscript .= "\%\%EndComments\n";
+
+    $postscript .= $o->{Preview} if ($o->{Preview});
+
+    ($postscript .= <<END_DEFAULTS) =~ s/$o->{strip}//gm if ($o->{Defaults});
+        \%\%BeginDefaults
+            $o->{Defaults}
+        \%\%EndDefaults
+END_DEFAULTS
 
     ($postscript .= <<END_PROLOG) =~ s/$o->{strip}//gm;
         \%\%BeginProlog
@@ -1111,7 +1133,8 @@ END_DEBUG_END
             if ($o->{filename}) {
                 $epsfile = ($o->{pagecount} > 1) ? "$o->{filename}-$o->{page}[$p]"
                                            : "$o->{filename}";
-                $epsfile .= $o->{Preview} ? ".epsi" : ".epsf";
+                $epsfile .= defined($o->{file_ext}) ? $o->{file_ext}
+                            : ($o->{Preview} ? ".epsi" : ".epsf");
             }
             my $postscript = "";
             my $page = $o->{page}->[$p];
@@ -1138,7 +1161,8 @@ END_DEBUG_END
         foreach my $cl (@{$o->{pageclip}}) {
             $clipping |= $cl;
         }
-        my $psfile = $o->{filename} ? "$o->{filename}.ps" : "";
+        my $psfile = $o->{filename};
+        $psfile .= defined($o->{file_ext}) ? $o->{file_ext} : '.ps' if $psfile;
         my $postscript = $o->pre_pages($landscape, $clipping, $psfile);
         for (my $p = 0; $p < $o->{pagecount}; $p++) {
             my $page = $o->{page}->[$p];
@@ -1188,25 +1212,43 @@ can still be extended.
 =cut
 
 
-sub print_file {
-    my ($o, $filename, $contents) = @_;
-    if ($filename) {
-        open(OUTFILE, ">", $filename) or die "Unable to write to \'$filename\' : $!\nStopped";
-        print OUTFILE $contents;
-        close OUTFILE;
+sub print_file
+{
+  my $o        = shift;
+  my $filename = shift;
 
-        if ($o->{png}) {
-            my $psfile  = "$filename.ps";
-            my $gs      = $o->get_ghostscript();
-            my $pngfile = check_file("$o->{filename}.png", $o->{directory});
-            my @cmd = qq(cat $filename | $gs -q -dBATCH -sDEVICE=png16m -sOutputFile=$pngfile -);
-            system @cmd;
-            unlink $filename;
-        }
+  if ($filename) {
+    my $outfile;
+    if ($o->{png}) {
+      # Write PostScript to temporary file:
+      require File::Temp;
+      $outfile = File::Temp->new;
     } else {
-        return "$contents\n";
-    }
-}
+      open($outfile, ">", $filename)
+          or die "Unable to write to \'$filename\' : $!\nStopped";
+    } # end else not PNG output
+
+    print $outfile $_[0];
+
+    if ($o->{png}) {
+      # Process the temporary file through Ghostscript to get PNG:
+      my $gs = $o->get_ghostscript();
+      $filename =~ s/\.\w+$/.png/ unless defined $o->{file_ext};
+      seek($outfile, 0,0) or die "Can't seek: $!";
+
+      open(my $oldin, '<&STDIN')  or die "Can't dup STDIN: $!";
+      open(STDIN, '<&', $outfile) or die "Can't redirect STDIN: $!";
+      my @cmd = ($gs, qw(-q -dBATCH -sDEVICE=png16m),
+                 "-sOutputFile=$filename",  '-');
+      system @cmd;
+      open(STDIN, '<&', $oldin)   or die "Can't restore STDIN: $!";
+    } else {
+      close $outfile;
+    } # end else not PNG output
+  } else {
+    return $_[0];
+  } # end else no filename
+} # end print_file
 # Internal method, used by output()
 # Expects file name and contents
 
@@ -1240,15 +1282,16 @@ File::Spec->devnull().
 =item C<dir>
 
 An optional directory C<dir>.  If present (and C<file> is not already an absolute path), it is prepended to
-C<file>.
+C<file>.  If no C<file> was specified, C<dir> is ignored.
 
 =back
 
 Specify the root file name for the output file(s) and ensure the resulting absolute path exists.  This should not
 include any extension. C<.ps> will be added for ordinary postscript files.  EPS files have an extension of
 C<.epsf> without or C<.epsi> with a preview image.
+(Unless you set the extension manually; see L</set_file_ext>.)
 
-If C<eps> has been set, multiple pages will have the page label appendend to the file name.
+If C<eps> has been set, multiple pages will have the page label appended to the file name.
 
 Example
 
@@ -1270,7 +1313,27 @@ The three pages for user 'chris' on a unix system would be:
 
 It would be wise to use B<set_page_bounding_box> explicitly for each page if using multiple pages in EPS files.
 
+=head2 get_file_ext()
+
+=head2 set_file_ext( file_ext )
+
+If the C<file_ext> is undef (the default), then the extension is set
+automatically based on the output type, as explained under
+L</set_filename>.  If C<file_ext> is the empty string, then no
+extension will be added to the filename.  Otherwise, it should be a
+string like '.ps' or '.eps'.  (But setting this has no effect on the
+actual type of the output file, only its name.)
+
 =cut
+
+sub get_file_ext {
+    shift->{file_ext};
+}
+
+sub set_file_ext {
+    my ($o, $ext) = @_;
+    $o->{file_ext} = $ext;
+}
 
 sub get_eps { my $o = shift; return $o->{eps}; }
 
@@ -1672,7 +1735,7 @@ Retrieve a user defined value.
 
 sub get_ghostscript {
     my $o = shift;
-    return defined($o->{ghostscript}) ? $o->{ghostscript} : 'gs';
+    return defined($o->{gs}) ? $o->{gs} : 'gs';
 }
 
 =head2 get_ghostscript
@@ -1763,11 +1826,20 @@ sub get_resources {
     return $o->{Resources};
 }
 
+our %supplied_type = (qw(
+  Document  file
+  File      file
+  Font      font
+  ProcSet   procset
+  Resource) => ''
+);
+
 sub add_resource {
     my ($o, $type, $name, $params, $resource) = @_;
     if (defined($resource)) {
         $resource =~ s/$o->{strip}//gm;
-        $o->{DocSupplied} .= "\%\%+ $name\n";
+        $o->{DocSupplied} .= "\%\%+ $supplied_type{$type} $name\n"
+            if defined $supplied_type{$type};
         ($o->{Resources} = <<END_USER_RESOURCE) =~ s/$o->{strip}//gm;
             \%\%Begin${type}: $name $params
             $resource
@@ -1823,7 +1895,7 @@ sub add_function {
     my ($o, $name, $entry) = @_;
     if (defined($name) and defined($entry)) {
         $entry =~ s/$o->{strip}//gm;
-        $o->{DocSupplied} .= "\%\%+ $name\n";
+        $o->{DocSupplied} .= "\%\%+ procset $name\n";
         ($o->{Functions} .= <<END_USER_FUNCTIONS) =~ s/$o->{strip}//gm;
             \%\%BeginProcSet: $name
             $entry
@@ -1864,7 +1936,7 @@ including those added by other classes.
 
 sub has_function {
     my ($o, $name) = @_;
-    return ($o->{DocSupplied} =~ /$name/);
+    return ($o->{DocSupplied} =~ /^\%\%\+ procset \Q$name\E$/m);
 }
 
 =head2 has_function( name )
@@ -1872,7 +1944,33 @@ sub has_function {
 This returns true if C<name> has already been included in the file.  The name
 should identical to that given to L</"add_function">.
 
+=head2 embed_document( filename )
+
+This reads the contents of C<filename>, which should be a PostScript
+file.  It returns a string with the contents of the file surrounded by
+%%BeginDocument and %%EndDocument comments, and adds C<filename> to
+the list of document supplied resources.
+
+You must pass the returned string to add_to_page or some other method
+that will actually include it in the document.
+
 =cut
+
+sub embed_document
+{
+  my ($o, $filename) = @_;
+
+  my $id = $o->pstr($filename);
+  $o->{DocSupplied} .= "%%+ file $id\n"
+      unless index($o->{DocSupplied}, "%%+ file $id\n") >= 0;
+
+  local $/;                     # Read entire file
+  open(my $in, '<', $filename) or die "Unable to open $filename: $!";
+  my $content = <$in>;
+  close $in;
+
+  return "\%\%BeginDocument: $id\n$content\n\%\%EndDocument\n";
+} # end embed_document
 
 sub get_setup {
     my $o = shift;
@@ -2334,6 +2432,27 @@ L<PostScript::Graph::Paper/gpapercolor>.
 
 =cut
 
+my %special = (
+  "\n" => '\n', "\r" => '\r', "\t" => '\t', "\b" => '\b',
+  "\f" => '\f', "\\" => '\\', "("  => '\(', ")"  => '\)',
+);
+my $specialKeys = join '', keys %special;
+
+sub pstr {
+  shift if @_ == 2;             # We were called as a method
+  my $string = shift;
+  $string =~ s/([$specialKeys])/$special{$1}/go;
+  "($string)";
+} # end pstr
+
+=head2 pstr( string )
+
+Converts the string to a string representation suitable for postscript code.
+
+This may also be called as a class or object method.
+
+=cut
+
 #=============================================================================
 
 =head1 BUGS AND LIMITATIONS
@@ -2383,6 +2502,8 @@ L<PostScript::Graph::Key>,
 L<PostScript::Graph::XY>,
 L<PostScript::Graph::Bar>.
 L<PostScript::Graph::Stock>.
+L<PostScript::Calendar>.
+L<PostScript::Report>.
 
 
 =head1 DISCLAIMER OF WARRANTY

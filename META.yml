@@ -1,27 +1,18 @@
---- #YAML:1.0
-name:               PostScript-File
-version:            1.02
-abstract:           Base class for creating Adobe PostScript files
+---
+abstract: 'Base class for creating Adobe PostScript files'
 author:
-    - Christopher J. Madsen <perl@cjmweb.net>
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    File::Spec:     0
-    Sys::Hostname:  0
-resources:
-    bugtracker:  http://rt.cpan.org/Public/Dist/Display.html?Name=PostScript-File
-    license:     http://dev.perl.org/licenses/
-    repository:  git://github.com/madsen/postscript-file.git
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.55_02
+  - 'Christopher Willmot <chris@willmot.co.uk>'
+  - 'Christopher J. Madsen <perl@cjmweb.net>'
+generated_by: 'Dist::Zilla version 1.092850'
+license: perl
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: PostScript-File
+requires:
+  File::Spec: 0
+  File::Temp: 0
+  Sys::Hostname: 0
+resources:
+  repository: http://github.com/madsen/postscript-file
+version: 1.03
