@@ -15,4 +15,4 @@ requires:
   Sys::Hostname: 0
 resources:
   repository: http://github.com/madsen/postscript-file
-version: 1.03
+version: 1.04

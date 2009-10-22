@@ -1,4 +1,4 @@
-PostScript::File version 1.03, released October 20, 2009
+PostScript::File version 1.04, released October 22, 2009
 
 This module produces the outline for an Adobe PostScript file. It provides
 convenient routines for writing postscript directly, including reporting
@@ -40,21 +40,15 @@ part of the standard distribution:
 
 
 CHANGES
-    Here's what's new in version 1.03 of PostScript::File:
+    Here's what's new in version 1.04 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	- Added pstr function/method
-	- Added embed_document method
-	- The dir & file parameters to new now actually work
-	- The file_ext parameter and {get,set}_file_ext methods allow
-	  you to change the way PostScript::File appends an extension
-	  to the output filename
-	- The PNG output added in 1.01 is now documented
-	- Using Ghostscript to generate PNG should work on Windows now
-	- Include resource types in %%DocumentSuppliedResources comment
-	- Fixed has_function to avoid false positives
-	- Include procset PostScript_File in %%DocumentSuppliedResources
-	- PostScript::File now requires Perl 5.8.0 or later
+	- add_comment now appends to comments (as originally documented)
+	  (fixes RT#25786)
+	- Allow WIDTHxHEIGHT as a paper size
+	- Remove spaces before DSC comments even when strip none
+	- pstr now wraps strings longer than 240 characters
+	- strip comments is more aggressive (but won't remove DSC comments)
 
 
 
