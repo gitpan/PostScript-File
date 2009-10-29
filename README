@@ -1,4 +1,4 @@
-PostScript::File version 1.04, released October 22, 2009
+PostScript::File version 1.05, released October 29, 2009
 
 This module produces the outline for an Adobe PostScript file. It provides
 convenient routines for writing postscript directly, including reporting
@@ -40,15 +40,22 @@ part of the standard distribution:
 
 
 CHANGES
-    Here's what's new in version 1.04 of PostScript::File:
+    Here's what's new in version 1.05 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	- add_comment now appends to comments (as originally documented)
-	  (fixes RT#25786)
-	- Allow WIDTHxHEIGHT as a paper size
-	- Remove spaces before DSC comments even when strip none
-	- pstr now wraps strings longer than 240 characters
-	- strip comments is more aggressive (but won't remove DSC comments)
+	- Major change in the way reencode works
+	  Setting it to 'cp1252' or 'iso-8859-1' causes automatic
+	  character set translation from Unicode strings.
+	- Added cp1252 (Win1252Encoding) support
+	  Most people should now use reencode => 'cp1252',
+	  even if they are not on Windows, to get the best
+	  Unicode support (which is still quite limited).
+	- When writing to a file, the output method now returns the pathname
+	- The %%BoundingBox must be integers.  If it's not, round up and
+	  also add a %%HiResBoundingBox comment.
+	- Fixed bug in pstr (wasn't quoting backslashes)
+	- It's %%PageOrder, not %%Order (and the order should be capitalized)
+	- Added an examples directory
 
 
 

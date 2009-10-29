@@ -1,5 +1,20 @@
 Revision history for Perl extension PostScript::File.
 
+1.05   October 29, 2009
+	- Major change in the way reencode works
+	  Setting it to 'cp1252' or 'iso-8859-1' causes automatic
+	  character set translation from Unicode strings.
+	- Added cp1252 (Win1252Encoding) support
+	  Most people should now use reencode => 'cp1252',
+	  even if they are not on Windows, to get the best
+	  Unicode support (which is still quite limited).
+	- When writing to a file, the output method now returns the pathname
+	- The %%BoundingBox must be integers.  If it's not, round up and
+	  also add a %%HiResBoundingBox comment.
+	- Fixed bug in pstr (wasn't quoting backslashes)
+	- It's %%PageOrder, not %%Order (and the order should be capitalized)
+	- Added an examples directory
+
 1.04   October 22, 2009
 	- add_comment now appends to comments (as originally documented)
 	  (fixes RT#25786)

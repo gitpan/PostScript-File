@@ -1,8 +1,9 @@
 package PostScript::File;
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 use 5.008;
 use strict;
 use warnings;
+use Carp 'croak';
 use File::Spec;
 use Sys::Hostname;
 use Exporter 'import';
@@ -19,6 +20,7 @@ our @EXPORT_OK = qw(check_tilde check_file incpage_label incpage_roman
 # global constants
 my $rmspace   = qr(^\s+)m;          # remove leading spaces
 my $rmcomment = qr(^\s*\(%(?![!%]).*\n\)?)m; # remove single line comments
+our %encoding_def; # defined near _set_reencode
 
 =head1 NAME
 
@@ -26,8 +28,8 @@ PostScript::File - Base class for creating Adobe PostScript files
 
 =head1 VERSION
 
-This document describes version 1.04 of PostScript::File,
-released October 22, 2009.
+This document describes version 1.05 of PostScript::File,
+released October 29, 2009.
 
 
 =head1 SYNOPSIS
@@ -41,7 +43,7 @@ An 'hello world' program:
 
     use PostScript::File;
 
-    my $ps = new PostScript::File();
+    my $ps = PostScript::File->new();
 
     $ps->add_to_page( <<END_PAGE );
         /Helvetica findfont
@@ -55,7 +57,7 @@ An 'hello world' program:
 
 =head2 All options
 
-    my $ps = new PostScript::File(
+    my $ps = PostScript::File->new(
         paper => 'Letter',
         height => 500,
         width => 400,
@@ -71,7 +73,7 @@ An 'hello world' program:
         landscape => 0,
 
         headings => 1,
-        reencode => 'ISOLatin1Encoding',
+        reencode => 'cp1252',
         font_suffix => '-iso',
 
         errors => 1,
@@ -95,9 +97,11 @@ An 'hello world' program:
 
 =head1 DESCRIPTION
 
-This module is designed as a supporting part of the PostScript::Graph suite.  For top level modules that output
+This module is designed to support other PostScript:: modules.  For top level modules that output
 something useful, see
 
+    PostScript::Calendar
+    PostScript::Report
     PostScript::Graph::Bar
     PostScript::Graph::Stock
     PostScript::Graph::XY
@@ -297,7 +301,7 @@ sub new {
     $o->{version}    = defined($opt->{version})      ? $opt->{version}      : undef;
     $o->{langlevel}  = defined($opt->{langlevel})    ? $opt->{langlevel}    : undef;
     $o->{extensions} = defined($opt->{extensions})   ? $opt->{extensions}   : undef;
-    $o->{order}      = defined($opt->{order})        ? $opt->{order}        : undef;
+    $o->{order}      = defined($opt->{order})        ? ucfirst lc $opt->{order} : undef;
     $o->set_page_label( $opt->{page} );
     $o->set_incpage_handler( $opt->{incpage_handler} );
 
@@ -307,12 +311,12 @@ sub new {
     $o->{errfont}    = defined($opt->{errfont})      ? $opt->{errfont}      : "Courier-Bold";
     $o->{errsize}    = defined($opt->{errsize})      ? $opt->{errsize}      : 12;
 
-    $o->{reencode}   = defined($opt->{reencode})     ? $opt->{reencode}     : "";
     $o->{font_suffix} = defined($opt->{font_suffix})  ? $opt->{font_suffix}  : "-iso";
     $o->{clipcmd}    = defined($opt->{clip_command}) ? $opt->{clip_command} : "clip";
     $o->{errors}     = defined($opt->{errors})       ? $opt->{errors}       : 1;
     $o->{headings}   = defined($opt->{headings})     ? $opt->{headings}     : 0;
     $o->set_strip( $opt->{strip} );
+    $o->_set_reencode( $opt->{reencode} );
 
     $o->newpage( $o->get_page_label() );
 
@@ -392,9 +396,29 @@ Enable PostScript comments such as the date of creation and user's name.
 
 =head3 reencode
 
-Requests that a font re-encode function be added and that the 13 standard PostScript fonts get re-encoded in the
-specified encoding. The only recognized value so far is 'ISOLatin1Encoding' which selects the iso8859-1 encoding and fits most of
-western Europe, including the Scandinavia.
+Requests that a font re-encode function be added and that the 13
+standard PostScript fonts get re-encoded in the specified encoding.
+The only allowed values are C<cp1252>, C<iso-8859-1>, and
+C<ISOLatin1Encoding>.  In most cases, you should set this to
+C<cp1252>, even if you are not using Windows.
+
+Setting this to C<cp1252> or C<iso-8859-1> also causes the document to
+be encoded in that character set.  Any strings you add to the document
+that have the UTF8 flag set will be reencoded automatically.  Strings
+that do not have the UTF8 flag are expected to be in the correct
+character set already.  This means that you should be able to set this
+to C<cp1252>, use Unicode characters in your code and the "-iso"
+versions of the fonts, and just have it do the right thing.
+
+Windows code page 1252 (aka WinLatin1) is a superset of the printable
+characters in iso-8859-1 (aka Latin1).  It adds a number of characters
+that are not in Latin1, especially common punctuation marks like the
+curly quotation marks, en & em dashes, Euro sign, and ellipsis.
+L<http://en.wikipedia.org/wiki/Windows-1252>
+
+For backwards compatibility with versions of PostScript::File older
+than 1.05, setting this to C<ISOLatin1Encoding> reencodes the fonts,
+but does not do any character set translation in the document.
 
 =head2 Initialization keys
 
@@ -451,7 +475,7 @@ and Symbol.  The string value is appended to these to make the new names.
 
 Example
 
-    $ps = new PostScript::File(
+    $ps = PostScript::File->new(
                 font_suffix => "-iso",
                 reencode => "ISOLatin1Encoding"
             );
@@ -606,8 +630,9 @@ Set the PostScript language level.  (No default)
 
 =head3 order
 
-Set the order the pages have been defined.  It should one of "ascend", "descend" or "special" if a document
-manager must not reorder the pages.  (No default)
+Set the order the pages are defined in the document.  It should one of
+"Ascend", "Descend" or "Special" if a document manager must not
+reorder the pages.  (No default)
 
 =head3 title
 
@@ -671,11 +696,13 @@ sub pre_pages {
     ## Thanks to Johan Vromans for the ISOLatin1Encoding.
     my $fonts = "";
     if ($o->{reencode}) {
-        $o->{DocSupplied} .= "\%\%+ Encoded_Fonts\n";
         my $encoding = $o->{reencode};
+        my $resource = $encoding;
+        $resource =~ s/(?:Encoding)?$/_Encoded_Fonts/;
+        $o->{DocSupplied} .= "\%\%+ $resource\n";
         my $ext = $o->{font_suffix};
-        $fonts .= $o->_here_doc(<<END_FONTS);
-        \%\%BeginResource: Encoded_Fonts
+        $fonts .= $o->_here_doc(<<"END_FONTS");
+        \%\%BeginResource: $resource
             /STARTDIFFENC { mark } bind def
             /ENDDIFFENC {
 
@@ -708,39 +735,7 @@ sub pre_pages {
 
                 TempEncode def
             } bind def
-
-            % Define ISO Latin1 encoding if it doesnt exist
-            /ISOLatin1Encoding where {
-            %   (ISOLatin1 exists!) =
-                pop
-            } {
-                (ISOLatin1 does not exist, creating...) =
-                /ISOLatin1Encoding StandardEncoding STARTDIFFENC
-                    144 /dotlessi /grave /acute /circumflex /tilde
-                    /macron /breve /dotaccent /dieresis /.notdef /ring
-                    /cedilla /.notdef /hungarumlaut /ogonek /caron /space
-                    /exclamdown /cent /sterling /currency /yen /brokenbar
-                    /section /dieresis /copyright /ordfeminine
-                    /guillemotleft /logicalnot /hyphen /registered
-                    /macron /degree /plusminus /twosuperior
-                    /threesuperior /acute /mu /paragraph /periodcentered
-                    /cedilla /onesuperior /ordmasculine /guillemotright
-                    /onequarter /onehalf /threequarters /questiondown
-                    /Agrave /Aacute /Acircumflex /Atilde /Adieresis
-                    /Aring /AE /Ccedilla /Egrave /Eacute /Ecircumflex
-                    /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
-                    /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde
-                    /Odieresis /multiply /Oslash /Ugrave /Uacute
-                    /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
-                    /agrave /aacute /acircumflex /atilde /adieresis
-                    /aring /ae /ccedilla /egrave /eacute /ecircumflex
-                    /edieresis /igrave /iacute /icircumflex /idieresis
-                    /eth /ntilde /ograve /oacute /ocircumflex /otilde
-                    /odieresis /divide /oslash /ugrave /uacute
-                    /ucircumflex /udieresis /yacute /thorn /ydieresis
-                ENDDIFFENC
-            } ifelse
-
+            \n$encoding_def{$encoding}
             % Name: Re-encode Font
             % Description: Creates a new font using the named encoding.
 
@@ -777,9 +772,7 @@ END_FONTS
     my $hostname = hostname();
     my $postscript = $o->{eps} ? "\%!PS-Adobe-3.0 EPSF-3.0\n" : "\%!PS-Adobe-3.0\n";
     if ($o->{eps}) {
-        $postscript .= $o->_here_doc(<<END_EPS);
-        \%\%BoundingBox: $o->{bbox}[0] $o->{bbox}[1] $o->{bbox}[2] $o->{bbox}[3]
-END_EPS
+        $postscript .= $o->bbox_comment('', $o->{bbox});
     }
     if ($o->{headings}) {
         $postscript .= $o->_here_doc(<<END_TITLES);
@@ -1052,10 +1045,10 @@ END_DOC_SUPPLIED
     $postscript .= $o->{Comments} if ($o->{Comments});
     $postscript .= "\%\%Orientation: ${\( $o->{landscape} ? 'Landscape' : 'Portrait' )}\n";
     $postscript .= "\%\%DocumentSuppliedResources:\n$o->{DocSupplied}" if ($o->{DocSupplied});
-    $postscript .= "\%\%Title: $o->{title}\n";
+    $postscript .= $o->encode_text("\%\%Title: $o->{title}\n");
     $postscript .= "\%\%Version: $o->{version}\n" if ($o->{version});
     $postscript .= "\%\%Pages: $o->{pagecount}\n" if ((not $o->{eps}) and ($o->{pagecount} > 1));
-    $postscript .= "\%\%Order: $o->{order}\n" if ((not $o->{eps}) and ($o->{order}));
+    $postscript .= "\%\%PageOrder: $o->{order}\n" if ((not $o->{eps}) and ($o->{order}));
     $postscript .= "\%\%Extensions: $o->{extensions}\n" if ($o->{extensions});
     $postscript .= "\%\%LanguageLevel: $o->{langlevel}\n" if ($o->{langlevel});
     $postscript .= "\%\%EndComments\n";
@@ -1110,13 +1103,13 @@ sub output {
         $debugbegin = "debugdict begin\nuserdict begin";
         $debugend   = "end\nend";
         if ($o->{debug} >= 2) {
-            $debugbegin = <<END_DEBUG_BEGIN;
+            $debugbegin = $o->_here_doc(<<END_DEBUG_BEGIN);
                 debugdict begin
                     userdict begin
                         mark
                         (Start of page) db_show
 END_DEBUG_BEGIN
-            $debugend = <<END_DEBUG_END;
+            $debugend = $o->_here_doc(<<END_DEBUG_END);
                         (End of page) db_show
                         db_stack
                         cleartomark
@@ -1173,16 +1166,15 @@ END_DEBUG_END
             my ($landscape, $pagebb);
             if ($o->{pagelandsc}[$p]) {
                 $landscape = "landscape";
-                $pagebb = "\%\%PageBoundingBox: $pbox[1] $pbox[0] $pbox[3] $pbox[2]";
+                $pagebb = $o->bbox_comment(Page => [ @pbox[1,0,3,2] ]);
             } else {
                 $landscape = "";
-                $pagebb = "\%\%PageBoundingBox: $pbox[0] $pbox[1] $pbox[2] $pbox[3]";
+                $pagebb = $o->bbox_comment(Page => \@pbox);
             }
             my $cliptobox = $o->{pageclip}[$p] ? "$pbox[0] $pbox[1] $pbox[2] $pbox[3] cliptobox" : "";
             $postscript .= $o->_here_doc(<<END_PAGE_SETUP);
                 \%\%Page: $o->{page}->[$p] ${\($p+1)}
-                $pagebb
-                \%\%BeginPageSetup
+                $pagebb\%\%BeginPageSetup
                     /pagelevel save def
                     $landscape
                     $cliptobox
@@ -1214,6 +1206,24 @@ can still be extended.
 
 =cut
 
+#---------------------------------------------------------------------
+# Create a BoundingBox: comment,
+# and a HiRes version if the box has a fractional part:
+
+sub bbox_comment
+{
+  my ($o, $type, $bbox) = @_;
+
+  my $comment = join(' ', @$bbox);
+
+  if ($comment =~ /\./) {
+    $comment = sprintf("%d %d %d %d\n%%%%%sHiResBoundingBox: %s",
+                       (map { $_ + 0.999999 } @$bbox),
+                       $type, $comment);
+  } # end if fractional bbox
+
+  "%%${type}BoundingBox: $comment\n";
+} # end bbox_comment
 
 sub print_file
 {
@@ -1248,6 +1258,7 @@ sub print_file
     } else {
       close $outfile;
     } # end else not PNG output
+    return $filename;
   } else {
     return $_[0];
   } # end else no filename
@@ -1298,7 +1309,7 @@ If C<eps> has been set, multiple pages will have the page label appended to the 
 
 Example
 
-    $ps->new PostScript::File( eps => 1 );
+    $ps = PostScript::File->new( eps => 1 );
     $ps->set_filename( "pics", "~/book" );
     $ps->newpage("vi");
         ... draw page
@@ -1438,6 +1449,111 @@ sub set_clipping {
     my $o = shift;
     $o->{clipping} = shift || 0;
 }
+
+our %encoding_name = qw(
+  iso-8859-1 ISOLatin1Encoding
+  cp1252     Win1252Encoding
+);
+
+%encoding_def = (
+  ISOLatin1Encoding => <<'END ISOLatin1Encoding',
+% Define ISO Latin1 encoding if it doesnt exist
+/ISOLatin1Encoding where {
+%   (ISOLatin1 exists!) =
+    pop
+} {
+    (ISOLatin1 does not exist, creating...) =
+    /ISOLatin1Encoding StandardEncoding STARTDIFFENC
+        144 /dotlessi /grave /acute /circumflex /tilde
+        /macron /breve /dotaccent /dieresis /.notdef /ring
+        /cedilla /.notdef /hungarumlaut /ogonek /caron /space
+        /exclamdown /cent /sterling /currency /yen /brokenbar
+        /section /dieresis /copyright /ordfeminine
+        /guillemotleft /logicalnot /hyphen /registered
+        /macron /degree /plusminus /twosuperior
+        /threesuperior /acute /mu /paragraph /periodcentered
+        /cedilla /onesuperior /ordmasculine /guillemotright
+        /onequarter /onehalf /threequarters /questiondown
+        /Agrave /Aacute /Acircumflex /Atilde /Adieresis
+        /Aring /AE /Ccedilla /Egrave /Eacute /Ecircumflex
+        /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+        /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde
+        /Odieresis /multiply /Oslash /Ugrave /Uacute
+        /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+        /agrave /aacute /acircumflex /atilde /adieresis
+        /aring /ae /ccedilla /egrave /eacute /ecircumflex
+        /edieresis /igrave /iacute /icircumflex /idieresis
+        /eth /ntilde /ograve /oacute /ocircumflex /otilde
+        /odieresis /divide /oslash /ugrave /uacute
+        /ucircumflex /udieresis /yacute /thorn /ydieresis
+    ENDDIFFENC
+} ifelse
+END ISOLatin1Encoding
+
+  Win1252Encoding => <<'END Win1252Encoding',
+% Define Windows Latin1 encoding
+/Win1252Encoding StandardEncoding STARTDIFFENC
+    96 /grave
+    % Here are the CP1252 extensions to ISO-8859-1:
+    128 /Euro /.notdef /quotesinglbase /florin /quotedblbase
+    /ellipsis /dagger /daggerdbl /circumflex /perthousand
+    /Scaron /guilsinglleft /OE /.notdef /Zcaron /.notdef
+    /.notdef /quoteleft /quoteright /quotedblleft /quotedblright
+    /bullet /endash /emdash /tilde /trademark /scaron
+    /guilsinglright /oe /.notdef /zcaron /Ydieresis
+    % We now return you to your ISO-8859-1 character set:
+    /space
+    /exclamdown /cent /sterling /currency /yen /brokenbar
+    /section /dieresis /copyright /ordfeminine
+    /guillemotleft /logicalnot /hyphen /registered
+    /macron /degree /plusminus /twosuperior
+    /threesuperior /acute /mu /paragraph /periodcentered
+    /cedilla /onesuperior /ordmasculine /guillemotright
+    /onequarter /onehalf /threequarters /questiondown
+    /Agrave /Aacute /Acircumflex /Atilde /Adieresis
+    /Aring /AE /Ccedilla /Egrave /Eacute /Ecircumflex
+    /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+    /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde
+    /Odieresis /multiply /Oslash /Ugrave /Uacute
+    /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+    /agrave /aacute /acircumflex /atilde /adieresis
+    /aring /ae /ccedilla /egrave /eacute /ecircumflex
+    /edieresis /igrave /iacute /icircumflex /idieresis
+    /eth /ntilde /ograve /oacute /ocircumflex /otilde
+    /odieresis /divide /oslash /ugrave /uacute
+    /ucircumflex /udieresis /yacute /thorn /ydieresis
+ENDDIFFENC
+END Win1252Encoding
+); # end %encoding_def
+
+sub _set_reencode
+{
+  my ($o, $encoding) = @_;
+
+  return unless $encoding;
+
+  if ($encoding eq 'ISOLatin1Encoding') {
+    $o->{reencode} = $encoding;
+    return;
+  } # end if backwards compatible ISOLatin1Encoding
+
+  $o->{reencode} = $encoding_name{$encoding}
+      or croak "Invalid reencode setting $encoding";
+
+  $o->{encoding} = $encoding;
+  require Encode;
+} # end _set_reencode
+
+sub encode_text
+{
+  my $o = shift;
+
+  if ($o->{encoding} and Encode::is_utf8( $_[0] )) {
+    Encode::encode($o->{encoding}, $_[0], 0);
+  } else {
+    $_[0];
+  }
+} # end encode_text
 
 sub get_strip {
     my $o = shift;
@@ -1848,7 +1964,7 @@ sub add_resource {
     my ($o, $type, $name, $params, $resource) = @_;
     if (defined($resource)) {
         $resource =~ s/$o->{strip}//gm;
-        $o->{DocSupplied} .= "\%\%+ $supplied_type{$type} $name\n"
+        $o->{DocSupplied} .= $o->encode_text("\%\%+ $supplied_type{$type} $name\n")
             if defined $supplied_type{$type};
         $o->{Resources} = $o->_here_doc(<<END_USER_RESOURCE);
             \%\%Begin${type}: $name $params
@@ -1905,7 +2021,7 @@ sub add_function {
     my ($o, $name, $entry) = @_;
     if (defined($name) and defined($entry)) {
         $entry =~ s/$o->{strip}//gm;
-        $o->{DocSupplied} .= "\%\%+ procset $name\n";
+        $o->{DocSupplied} .= $o->encode_text("\%\%+ procset $name\n");
         $o->{Functions} .= $o->_here_doc(<<END_USER_FUNCTIONS);
             \%\%BeginProcSet: $name
             $entry
@@ -1971,8 +2087,9 @@ sub embed_document
   my ($o, $filename) = @_;
 
   my $id = $o->pstr(substr($filename, -234), 1); # in case it's long
-  $o->{DocSupplied} .= "%%+ file $id\n"
-      unless index($o->{DocSupplied}, "%%+ file $id\n") >= 0;
+  my $supplied = $o->encode_text("%%+ file $id\n");
+  $o->{DocSupplied} .= $supplied
+      unless index($o->{DocSupplied}, $supplied) >= 0;
 
   local $/;                     # Read entire file
   open(my $in, '<', $filename) or die "Unable to open $filename: $!";
@@ -1990,7 +2107,7 @@ sub get_setup {
 sub add_setup {
     my ($o, $entry) = @_;
     $entry =~ s/$o->{strip}//gm;
-    $o->{Setup} = $entry if (defined $entry);
+    $o->{Setup} = $o->encode_text($entry) if (defined $entry);
 }
 
 =head2 get_setup()
@@ -2010,7 +2127,7 @@ sub get_page_setup {
 sub add_page_setup {
     my ($o, $entry) = @_;
     $entry =~ s/$o->{strip}//gm;
-    $o->{PageSetup} = $entry if (defined $entry);
+    $o->{PageSetup} = $o->encode_text($entry) if (defined $entry);
 }
 
 =head2 get_page_setup()
@@ -2045,7 +2162,7 @@ sub add_to_page {
         }
     }
     $entry =~ s/$o->{strip}//gm;
-    $o->{Pages}[$o->{p}] .= $entry || "";
+    $o->{Pages}[$o->{p}] .= $o->encode_text($entry);
 }
 
 =head2 get_page( [page] )
@@ -2082,7 +2199,7 @@ sub get_page_trailer {
 sub add_page_trailer {
     my ($o, $entry) = @_;
     $entry =~ s/$o->{strip}//gm;
-    $o->{PageTrailer} = $entry if (defined $entry);
+    $o->{PageTrailer} = $o->encode_text($entry) if (defined $entry);
 }
 
 =head2 get_page_trailer()
@@ -2102,7 +2219,7 @@ sub get_trailer {
 sub add_trailer {
     my ($o, $entry) = @_;
     $entry =~ s/$o->{strip}//gm;
-    $o->{Trailer} = $entry if (defined $entry);
+    $o->{Trailer} = $o->encode_text($entry) if (defined $entry);
 }
 
 =head2 get_trailer()
@@ -2294,7 +2411,7 @@ sub _here_doc
     $text =~ s/^[ \t]+\n/\n/gm;
   } # end elsif no strip but $text is indented
 
-  $text;
+  $o->encode_text($text);
 } # end _here_doc
 
 =head1 EXPORTED FUNCTIONS
@@ -2462,9 +2579,10 @@ L<PostScript::Graph::Paper/gpapercolor>.
 
 my %special = (
   "\n" => '\n', "\r" => '\r', "\t" => '\t', "\b" => '\b',
-  "\f" => '\f', "\\" => '\\', "("  => '\(', ")"  => '\)',
+  "\f" => '\f', "\\" => "\\\\", "("  => '\(', ")"  => '\)',
 );
 my $specialKeys = join '', keys %special;
+$specialKeys =~ s/\\/\\\\/;     # Have to quote backslash
 
 sub pstr {
   shift if @_ == 2;             # We were called as a method

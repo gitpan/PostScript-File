@@ -3,16 +3,18 @@ abstract: 'Base class for creating Adobe PostScript files'
 author:
   - 'Christopher Willmot <chris@willmot.co.uk>'
   - 'Christopher J. Madsen <perl@cjmweb.net>'
-generated_by: 'Dist::Zilla version 1.092850'
+generated_by: 'Dist::Zilla version 1.092990'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: PostScript-File
 requires:
+  Carp: 0
+  Encode: 0
   File::Spec: 0
   File::Temp: 0
   Sys::Hostname: 0
 resources:
   repository: http://github.com/madsen/postscript-file
-version: 1.04
+version: 1.05
