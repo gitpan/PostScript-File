@@ -2,12 +2,20 @@
 use strict;
 use warnings;
 
-use Test;
-BEGIN { plan tests => 7 };
+use Test::More;
+use File::Spec ();
+
+BEGIN {
+  eval "use File::Temp 0.15 'tempdir';";
+  plan skip_all => "File::Temp 0.15 required for testing" if $@;
+
+  plan tests => 9;
+}
+
 use PostScript::File qw(check_file);
 ok(1); # module found
 
-my $ps = new PostScript::File(
+my $ps = PostScript::File->new(
     headings => 1,
     paper => "A5",
     landscape => 1,
@@ -20,11 +28,11 @@ my $ps = new PostScript::File(
     errors => 1,
     debug => 2,
     );
-ok($ps); # object created
+isa_ok($ps, 'PostScript::File'); # object created
 
 $ps->add_to_page( <<END_PAGE );
-    /Helvetica findfont 
-    12 scalefont 
+    /Helvetica findfont
+    12 scalefont
     setfont
     100 150 moveto
     (hello world) show
@@ -35,13 +43,18 @@ $ps->add_to_page( <<END_PAGE );
     666
 END_PAGE
 my $page = $ps->get_page_label();
-ok($page, "1");
+is($page, '1', "page 1");
 ok($ps->get_page());
 
+my $dir  = $ARGV[0] || tempdir(CLEANUP => 1);
 my $name = "fi03debug";
-$ps->output( $name, "test-results" );
+my $out  = $ps->output( $name, $dir );
 ok(1); # survived so far
-my $file = check_file( "$name.ps", "test-results" );
+
+is($ps->get_filename, undef, 'Did not set filename');
+
+is($out, File::Spec->catfile( $dir, "$name.ps" ), 'expected output filename');
+
+my $file = check_file( "$name.ps", $dir );
 ok($file);
 ok(-e $file);
-

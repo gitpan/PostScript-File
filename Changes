@@ -1,5 +1,52 @@
 Revision history for Perl extension PostScript::File.
 
+2.00   February 26, 2010
+	- Numerous API changes, mostly minor, but there could be
+	  problems with backwards compatibility.
+
+	- Changed ISOLatin1Encoding to match PostScript's
+	  The HYPHEN-MINUS (\x2D) is now /minus instead of /hyphen.
+	  Use SOFT-HYPHEN (\xAD) to get a proper hyphen.
+	  Made the same change to Win1252Encoding (cp1252).
+
+	  Please read Hyphens and Minus Signs in PostScript::File for details.
+
+	- Added auto_hyphen attribute with get/set methods
+	- Added need_fonts attribute
+	- Added as_string, embed_font, need_resource, & testable_output methods
+	- add_resource accepts all DSC 3.0 resource types,
+	  but no longer accepts generic 'Resource' type
+	- Reencode fonts added using embed_font or add_resource
+	- Added PostScript::File::Metrics, which includes the metrics
+	  for the standard PostScript fonts.  No more trying to
+	  configure Font::AFM!!!
+	- PNG output has been removed.  Use PostScript::Convert instead.
+	- embed_document now handles & removes TIFF, WMF, or EPSI preview
+	- output accepts an open filehandle as a filename alternative
+	- Passing undef to output always returns the PostScript as a string
+
+	Minor changes in 2.00:
+
+	- Don't reencode Symbol; it doesn't use the StandardEncoding.
+	  This is not backwards compatible, but I doubt anyone was
+	  using Symbol-iso, as it's not very useful.
+	- Mapped some control characters as accents in Win1252Encoding,
+	  since the Red Book suggests they are required in langlevel 1
+	- add_default, add_resource, add_setup, add_page_setup,
+	  add_page_trailer, & add_trailer now append instead of
+	  overwriting previous value
+	- add_function is now a no-op if has_function returns true
+	- add_resource uses BeginResource instead of deprecated comments
+	- get_strip now returns 'none', 'space', or 'comments'
+	  instead of the regular expression being used
+	- In eps mode, output now returns a list of pages
+	- Multiple calls to output no longer cause duplicate resources
+	- Passing a filename to output does not permanently set the filename
+	- Fonts & resources appear in the document Setup section
+	  instead of the Prolog
+	- Include a Local Variables section for Emacs in the %%Trailer
+	  describing the file's encoding
+
 1.05   October 29, 2009
 	- Major change in the way reencode works
 	  Setting it to 'cp1252' or 'iso-8859-1' causes automatic

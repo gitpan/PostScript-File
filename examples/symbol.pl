@@ -3,7 +3,7 @@
 # This example is hereby placed in the public domain.
 # You may copy from it freely.
 #
-# This displays the Windows cp1252 character set.
+# This displays PostScript's Symbol font in its default encoding.
 #---------------------------------------------------------------------
 
 use strict;
@@ -13,20 +13,20 @@ use PostScript::File 1.05;      # Need cp1252 support
 
 my $ps = PostScript::File->new(
   paper    => 'letter',
-  reencode => 'cp1252', # Best available Unicode support (still not much)
-  auto_hyphen => 0,     # We don't want any hyphen translation
-  need_fonts  => ['Helvetica'],
+  reencode => 'cp1252',
+  auto_hyphen => 0,             # We don't want any hyphen translation
+  need_fonts  => [qw(Helvetica Symbol)],
   left     => 72,
   top      => 72,
 );
 
 $ps->add_to_page( <<END_PAGE );
-    /Helvetica-iso findfont
-    16 scalefont
-    setfont
+    /lblFont  /Helvetica-iso findfont 16 scalefont  def
+    /symFont  /Symbol        findfont 16 scalefont  def
 
-    212 700 moveto
-    (Windows Code Page 1252) show
+    lblFont setfont
+    154 700 moveto
+    (PostScript's Symbol font (default encoding)) show
 END_PAGE
 
 my $char = 32;
@@ -48,9 +48,10 @@ for my $i (0 .. 0xF) {
 while ($char < 0x100) {
   $y -= $yStep;
 
-  $ps->add_to_page(sprintf "%d %d moveto\n%s show\n",
-                     $xMar, $y,
-                     $ps->pstr(sprintf '0x%X_', $char/16));
+  $ps->add_to_page(sprintf("lblFont setfont\n%d %d moveto\n%s show\n".
+                           "symFont setfont\n",
+                           $xMar, $y,
+                           $ps->pstr(sprintf '0x%X_', $char/16)));
 
   for my $i (0 .. 0xF) {
     $ps->add_to_page(sprintf "%d %d moveto\n%s show\n",
@@ -59,4 +60,4 @@ while ($char < 0x100) {
   }
 }
 
-printf "Wrote %s...\n", $ps->output("cp1252", $ENV{TMP});
+printf "Wrote %s...\n", $ps->output("symbol", $ENV{TMP});

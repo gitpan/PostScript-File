@@ -2,23 +2,38 @@
 use strict;
 use warnings;
 
-use ExtUtils::MakeMaker;
+ BEGIN { require 5.8.0; } 
 
-WriteMakefile(
-  DISTNAME  => 'PostScript-File',
-  NAME      => 'PostScript::File',
-  AUTHOR    => "Christopher\ Willmot\ \<chris\@willmot\.co\.uk\>\,\ Christopher\ J\.\ Madsen\ \<perl\@cjmweb\.net\>",
-  ABSTRACT  => "Base\ class\ for\ creating\ Adobe\ PostScript\ files",
-  VERSION   => '1.05',
-  EXE_FILES => [ qw() ],
-  (eval { ExtUtils::MakeMaker->VERSION(6.31) } ? (LICENSE => 'perl') : ()),
-  PREREQ_PM    => {
-    "File::Spec" => '0',
-    "File::Temp" => '0',
-    "Carp" => '0',
-    "Encode" => '0',
-    "Sys::Hostname" => '0',
-  },
-  test => {TESTS => 't/*.t'}
-);
+use ExtUtils::MakeMaker 6.11;
+
+
+
+my %WriteMakefileArgs = (
+                       'test' => {
+                                   'TESTS' => 't/*.t'
+                                 },
+                       'NAME' => 'PostScript::File',
+                       'DISTNAME' => 'PostScript-File',
+                       'AUTHOR' => 'Christopher J. Madsen <perl@cjmweb.net>',
+                       'ABSTRACT' => 'Base class for creating Adobe PostScript files',
+                       'EXE_FILES' => [],
+                       'VERSION' => '2.00',
+                       'LICENSE' => 'perl',
+                       'PREREQ_PM' => {
+                                        'Scalar::Util' => '0',
+                                        'ExtUtils::MakeMaker' => '6.11',
+                                        'File::Spec' => '0',
+                                        'Encode' => '2.12',
+                                        'Carp' => '0',
+                                        'Sys::Hostname' => '0'
+                                      }
+                     );
+
+
+delete $WriteMakefileArgs{LICENSE}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.31) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
 

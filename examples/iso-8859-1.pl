@@ -14,6 +14,8 @@ use PostScript::File 1.05;      # Need iso-8859-1 support
 my $ps = PostScript::File->new(
   paper    => 'letter',
   reencode => 'iso-8859-1',
+  auto_hyphen => 0,             # We don't want any hyphen translation
+  need_fonts  => ['Helvetica'],
   left     => 72,
   top      => 72,
 );
