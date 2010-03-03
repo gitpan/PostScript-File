@@ -2,7 +2,7 @@
 abstract: 'Base class for creating Adobe PostScript files'
 author:
   - 'Christopher J. Madsen <perl@cjmweb.net>'
-generated_by: 'Dist::Zilla version 1.100520'
+generated_by: 'Dist::Zilla version 1.100600'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -10,7 +10,7 @@ meta-spec:
 name: PostScript-File
 requires:
   Carp: 0
-  Encode: 2.12
+  Encode: 2.21
   ExtUtils::MakeMaker: 6.11
   File::Spec: 0
   Scalar::Util: 0
@@ -18,4 +18,4 @@ requires:
   perl: 5.8.0
 resources:
   repository: http://github.com/madsen/postscript-file
-version: 2.00
+version: 2.01

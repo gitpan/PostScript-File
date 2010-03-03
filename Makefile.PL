@@ -17,13 +17,13 @@ my %WriteMakefileArgs = (
                        'AUTHOR' => 'Christopher J. Madsen <perl@cjmweb.net>',
                        'ABSTRACT' => 'Base class for creating Adobe PostScript files',
                        'EXE_FILES' => [],
-                       'VERSION' => '2.00',
+                       'VERSION' => '2.01',
                        'LICENSE' => 'perl',
                        'PREREQ_PM' => {
                                         'Scalar::Util' => '0',
                                         'ExtUtils::MakeMaker' => '6.11',
                                         'File::Spec' => '0',
-                                        'Encode' => '2.12',
+                                        'Encode' => '2.21',
                                         'Carp' => '0',
                                         'Sys::Hostname' => '0'
                                       }

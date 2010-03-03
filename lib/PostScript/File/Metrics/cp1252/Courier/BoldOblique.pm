@@ -5,7 +5,8 @@
 #---------------------------------------------------------------------
 package PostScript::File::Metrics::cp1252::Courier::BoldOblique;
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
+# This file is part of PostScript-File 2.01 (March 3, 2010)
 
 $PostScript::File::Metrics::Info{'Courier-BoldOblique'} ||= {
   'ascender' => 626,
@@ -25,7 +26,7 @@ $PostScript::File::Metrics::Info{'Courier-BoldOblique'} ||= {
 
 $PostScript::File::Metrics::Metrics{'Courier-BoldOblique'}{'cp1252'} = [
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,600,600,600,600,0,0,0,0,0,0,0,0,0,0,0,
   600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,
   600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,
   600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,

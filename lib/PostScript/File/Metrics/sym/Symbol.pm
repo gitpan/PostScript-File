@@ -5,7 +5,8 @@
 #---------------------------------------------------------------------
 package PostScript::File::Metrics::sym::Symbol;
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
+# This file is part of PostScript-File 2.01 (March 3, 2010)
 
 $PostScript::File::Metrics::Info{'Symbol'} ||= {
   'ascender' => undef,

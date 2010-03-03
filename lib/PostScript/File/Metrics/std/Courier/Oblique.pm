@@ -5,7 +5,8 @@
 #---------------------------------------------------------------------
 package PostScript::File::Metrics::std::Courier::Oblique;
 
-our $VERSION = '2.00';
+our $VERSION = '2.01';
+# This file is part of PostScript-File 2.01 (March 3, 2010)
 
 $PostScript::File::Metrics::Info{'Courier-Oblique'} ||= {
   'ascender' => 629,
