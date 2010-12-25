@@ -19,8 +19,8 @@ package PostScript::File;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.01';          ## no critic
-# This file is part of PostScript-File 2.01 (March 3, 2010)
+our $VERSION = '2.02';          ## no critic
+# This file is part of PostScript-File 2.02 (December 24, 2010)
 
 use strict;
 use warnings;
@@ -1165,8 +1165,13 @@ sub convert_hyphens
     # it's a minus sign (U+2212):
     $text =~ s/(?: ^ | (?<=\s) ) - (?= \d | \s | $ ) /\x{2212}/gx;
 
-    # If it's surrounded by digits, it's a minus sign (U+2212):
-    $text =~ s/ (?<=\d) - (?=\d) /\x{2212}/gx;
+    # If it's surrounded by digits, or
+    # it's preceded by punctuation and followed by a digit,
+    # it's a minus sign (U+2212):
+    $text =~ s/ (?<=[\d[:punct:]]) - (?=\d) /\x{2212}/gx;
+
+    # If it's followed by a currency symbol, it's a minus sign (U+2212):
+    $text =~ s/ - (?=\p{Sc}) /\x{2212}/gx;
 
     # Otherwise, it's a hyphen (U+2010):
     $text =~ s/-/\x{2010}/gx;
@@ -1854,9 +1859,9 @@ PostScript::File - Base class for creating Adobe PostScript files
 
 =head1 VERSION
 
-This document describes version 2.01 of
-PostScript::File, released March 3, 2010
-as part of PostScript-File version 2.01.
+This document describes version 2.02 of
+PostScript::File, released December 24, 2010
+as part of PostScript-File version 2.02.
 
 =head1 SYNOPSIS
 
@@ -2011,9 +2016,9 @@ method will automatically translate HYPHEN-MINUS to either HYPHEN or
 MINUS SIGN.  (This happens only when C<pstr> is called as an object method.)
 
 The rule is that if a HYPHEN-MINUS is surrounded by whitespace, or
-surrounded by digits, or it's preceded by whitespace and followed by a
-digit, it's translated to MINUS SIGN.  Otherwise, it's translated to
-HYPHEN.
+surrounded by digits, or it's preceded by whitespace or punctuation
+and followed by a digit, or it's followed by a currency symbol, it's
+translated to MINUS SIGN.  Otherwise, it's translated to HYPHEN.
 
 =head1 CONSTRUCTOR
 
@@ -3094,15 +3099,15 @@ Most of these functions have only had a couple of tests, so please feel free to 
 
 =head1 AUTHOR
 
-Chris Willmot   C<< <chris AT willmot.co.uk> >>
+Chris Willmot   S<C<< <chris AT willmot.co.uk> >>>
 
 Thanks to Johan Vromans for the ISOLatin1Encoding.
 
 As of September 2009, PostScript::File is now being maintained by
-Christopher J. Madsen  C<< <perl AT cjmweb.net> >>.
+Christopher J. Madsen  S<C<< <perl AT cjmweb.net> >>>.
 
 Please report any bugs or feature requests to
-C<< <bug-PostScript-File AT rt.cpan.org> >>,
+S<C<< <bug-PostScript-File AT rt.cpan.org> >>>,
 or through the web interface at
 L<http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File>
 
@@ -3113,7 +3118,7 @@ L<http://github.com/madsen/postscript-file>.
 
 Copyright 2002, 2003 Christopher P Willmot.  All rights reserved.
 
-Copyright 2009 Christopher J. Madsen. All rights reserved.
+Copyright 2010 Christopher J. Madsen. All rights reserved.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

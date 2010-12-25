@@ -2,36 +2,54 @@
 use strict;
 use warnings;
 
- BEGIN { require 5.8.0; } 
+BEGIN { require 5.8.0; }
 
-use ExtUtils::MakeMaker 6.11;
+use ExtUtils::MakeMaker 6.31;
 
 
 
 my %WriteMakefileArgs = (
-                       'test' => {
-                                   'TESTS' => 't/*.t'
-                                 },
-                       'NAME' => 'PostScript::File',
-                       'DISTNAME' => 'PostScript-File',
-                       'AUTHOR' => 'Christopher J. Madsen <perl@cjmweb.net>',
-                       'ABSTRACT' => 'Base class for creating Adobe PostScript files',
-                       'EXE_FILES' => [],
-                       'VERSION' => '2.01',
-                       'LICENSE' => 'perl',
-                       'PREREQ_PM' => {
-                                        'Scalar::Util' => '0',
-                                        'ExtUtils::MakeMaker' => '6.11',
-                                        'File::Spec' => '0',
-                                        'Encode' => '2.21',
-                                        'Carp' => '0',
-                                        'Sys::Hostname' => '0'
-                                      }
-                     );
+  'ABSTRACT' => 'Base class for creating Adobe PostScript files',
+  'AUTHOR' => 'Christopher J. Madsen <perl@cjmweb.net>',
+  'BUILD_REQUIRES' => {
+    'Test::More' => '0.88'
+  },
+  'CONFIGURE_REQUIRES' => {
+    'ExtUtils::MakeMaker' => '6.31'
+  },
+  'DISTNAME' => 'PostScript-File',
+  'EXE_FILES' => [],
+  'LICENSE' => 'perl',
+  'NAME' => 'PostScript::File',
+  'PREREQ_PM' => {
+    'Carp' => '0',
+    'Encode' => '2.21',
+    'File::Spec' => '0',
+    'Scalar::Util' => '0',
+    'Sys::Hostname' => '0'
+  },
+  'VERSION' => '2.02',
+  'test' => {
+    'TESTS' => 't/*.t'
+  }
+);
 
 
-delete $WriteMakefileArgs{LICENSE}
-  unless eval { ExtUtils::MakeMaker->VERSION(6.31) };
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 WriteMakefile(%WriteMakefileArgs);
 

@@ -18,8 +18,8 @@ package PostScript::File::Metrics::Loader;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.01';          ## no critic
-# This file is part of PostScript-File 2.01 (March 3, 2010)
+our $VERSION = '2.02';          ## no critic
+# This file is part of PostScript-File 2.02 (December 24, 2010)
 
 use strict;
 use warnings;
@@ -169,7 +169,8 @@ sub load
   unless ($PostScript::File::Metrics::Info{$font}) {
     my %info;
     while (my ($method, $key) = each %attribute) {
-      $info{$key} = eval { $afm->$method };
+      # Font::AFM croaks instead of returning undef:
+      $info{$key} = do { local $@; eval { $afm->$method } };
     }
 
     # Ensure Data::Dumper will dump numbers as such:
@@ -256,9 +257,9 @@ PostScript::File::Metrics::Loader - Load metrics for PostScript fonts using Font
 
 =head1 VERSION
 
-This document describes version 2.01 of
-PostScript::File::Metrics::Loader, released March 3, 2010
-as part of PostScript-File version 2.01.
+This document describes version 2.02 of
+PostScript::File::Metrics::Loader, released December 24, 2010
+as part of PostScript-File version 2.02.
 
 =head1 DESCRIPTION
 
@@ -378,10 +379,10 @@ No bugs have been reported.
 
 =head1 AUTHOR
 
-Christopher J. Madsen  C<< <perl AT cjmweb.net> >>
+Christopher J. Madsen  S<C<< <perl AT cjmweb.net> >>>
 
 Please report any bugs or feature requests to
-C<< <bug-PostScript-File AT rt.cpan.org> >>,
+S<C<< <bug-PostScript-File AT rt.cpan.org> >>>,
 or through the web interface at
 L<http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File>
 

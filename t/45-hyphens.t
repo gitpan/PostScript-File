@@ -2,7 +2,7 @@
 #---------------------------------------------------------------------
 # Copyright 2009 Christopher J. Madsen
 #
-# Author: Christopher J. Madsen <perl@pobox.com>
+# Author: Christopher J. Madsen <perl@cjmweb.net>
 # Created: 1 Nov 2009
 #
 # This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,9 @@ my @tests = (
   '2 - 3'     => '2 <MINUS> 3',
   '4-5'       => '4<MINUS>5',
   '6-'        => '6<HYPHEN>',
+  '(-7)'      => '(<MINUS>7)',
+  '-$8'       => '<MINUS>$8',
+  "-\x{20AC}9"=> '<MINUS><U+20AC>9', # euro sign
   "$hyphen $minus -" => '<HYPHEN> <MINUS> <MINUS>',
 );
 

@@ -6,7 +6,7 @@
 package PostScript::File::Metrics::iso_8859_1::Courier::BoldOblique;
 
 our $VERSION = '2.01';
-# This file is part of PostScript-File 2.01 (March 3, 2010)
+# This file is part of PostScript-File 2.02 (December 24, 2010)
 
 $PostScript::File::Metrics::Info{'Courier-BoldOblique'} ||= {
   'ascender' => 626,

@@ -18,8 +18,8 @@ package PostScript::File::Metrics;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.01';          ## no critic
-# This file is part of PostScript-File 2.01 (March 3, 2010)
+our $VERSION = '2.02';          ## no critic
+# This file is part of PostScript-File 2.02 (December 24, 2010)
 
 use strict;
 use warnings;
@@ -34,7 +34,7 @@ our (%Info, %Metrics);
 # Generate accessor methods:
 
 BEGIN {
-  ## no critic (ProhibitStringyEval)
+  my ($code, $error, $success) = '';
   foreach my $attribute (qw(
     full_name
     family
@@ -43,8 +43,7 @@ BEGIN {
     italic_angle
     version
   )) {
-    eval "sub $attribute { shift->{info}{$attribute} };";
-    die $@ if $@;
+    $code .= "sub $attribute { shift->{info}{$attribute} };\n";
   }
 
   foreach my $attribute (qw(
@@ -55,16 +54,24 @@ BEGIN {
     ascender
     descender
   )) {
-    eval <<"END SUB";
+    $code .= <<"END SUB";
       sub $attribute {
         my \$self = shift;
         my \$v = \$self->{info}{$attribute};
         defined \$v ? \$v * \$self->{factor} : \$v;
       }
 END SUB
-    die $@ if $@;
   }
-  ## use critic
+
+  { local $@;
+    $success = eval "$code ; 'OK'"; ## no critic ProhibitStringyEval
+    $error   = $@;
+  } # end local $@
+
+  unless ($success and $success eq 'OK') {
+    $error ||= 'eval died with false $@';
+    die "$code\n$error";
+  }
 } # end BEGIN
 
 #---------------------------------------------------------------------
@@ -100,7 +107,8 @@ sub new
     my $package = _get_package_name($font, $encoding);
 
     ## no critic (ProhibitStringyEval)
-    unless (do { local $@; eval "require $package; 1" }) {
+    unless (do { local $@; eval "require $package; 1" }
+            and $Metrics{$font}{$encoding}) {
       # No pre-compiled package, we'll have to read the AFM file:
       ## use critic
       require PostScript::File::Metrics::Loader;
@@ -112,7 +120,8 @@ sub new
   # Create the Metrics object:
   my $self = bless {
     info     => $Info{$font},
-    metrics  => $Metrics{$font}{$encoding},
+    metrics  => $Metrics{$font}{$encoding}
+      || croak "Failed to load metrics for $font in encoding $encoding",
   }, $class;
 
   $self->{encoding} = find_encoding($encoding)
@@ -226,9 +235,9 @@ PostScript::File::Metrics - Metrics for PostScript fonts
 
 =head1 VERSION
 
-This document describes version 2.01 of
-PostScript::File::Metrics, released March 3, 2010
-as part of PostScript-File version 2.01.
+This document describes version 2.02 of
+PostScript::File::Metrics, released December 24, 2010
+as part of PostScript-File version 2.02.
 
 =head1 SYNOPSIS
 
@@ -329,7 +338,8 @@ An arrayref of four numbers giving the lower-left x, lower-left y,
 upper-right x, and upper-right y of the font bounding box. The font
 bounding box is the smallest rectangle enclosing the shape that would
 result if all the characters of the font were placed with their
-origins coincident at (0,0), and then painted.
+origins coincident at (0,0), and then painted.  You must not modify
+the returned arrayref.
 
 
 =head2 cap_height
@@ -453,10 +463,10 @@ No bugs have been reported.
 
 =head1 AUTHOR
 
-Christopher J. Madsen  C<< <perl AT cjmweb.net> >>
+Christopher J. Madsen  S<C<< <perl AT cjmweb.net> >>>
 
 Please report any bugs or feature requests to
-C<< <bug-PostScript-File AT rt.cpan.org> >>,
+S<C<< <bug-PostScript-File AT rt.cpan.org> >>>,
 or through the web interface at
 L<http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File>
 

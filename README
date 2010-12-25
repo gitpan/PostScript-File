@@ -1,8 +1,8 @@
-PostScript::File version 2.01, released March 3, 2010
+PostScript::File version 2.02, released December 24, 2010
 
 This module produces the outline for an Adobe PostScript file. It provides
-convenient routines for writing postscript directly, including reporting
-postscript errors and debugging support.  Although it may be used independently,
+convenient routines for writing PostScript directly, including reporting
+PostScript errors and debugging support.  Although it may be used independently,
 the functions provided are also suitable for use in other modules.  See one of
 these modules for a top-level object.
 
@@ -12,42 +12,43 @@ these modules for a top-level object.
     PostScript::Graph::Bar
     Finance::Shares::Chart
 
-It is considered beta code as the interface has remained stable over many months
-of use.  However, not all the features have been tested properly so experiment
-with caution.
-
 
 
 INSTALLATION
 
 To install this module type the following:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+    perl Makefile.PL
+    make
+    make test
+    make install
 
 
 
 DEPENDENCIES
 
-This module requires these other modules and libraries, although they are both
-part of the standard distribution:
+This module requires these other modules and libraries, although they are all
+part of the standard Perl distribution:
 
-  File::Spec
+  Package        Minimum Version
+  -------------- ---------------
+  perl            5.8.0
+  Carp            
+  Encode          2.21
+  File::Spec      
+  Scalar::Util    
   Sys::Hostname
 
 
 
 CHANGES
-    Here's what's new in version 2.01 of PostScript::File:
+    Here's what's new in version 2.02 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	- The metrics for the cp1252 encoding did not reflect the
-	  accents mapped to control characters (but those characters
-	  are not normally used, anyway).
-	- Fixed some warnings in the test suite
-	- Version 2.00 actually needs Encode 2.21, but only specified 2.12
+	- Revised the rules for hyphen-minus processing:
+	  If it's preceded by punctuation and followed by a digit, or
+	  it's followed by a currency symbol, it's a minus sign (U+2212).
+	- Clean up use of eval and properly localize $@
 
 
 
