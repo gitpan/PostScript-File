@@ -2,7 +2,7 @@
 package PostScript::File;
 #
 # Copyright 2002, 2003 Christopher P Willmot.
-# Copyright 2009 Christopher J. Madsen
+# Copyright 2011 Christopher J. Madsen
 #
 # Author: Chris Willmot         <chris AT willmot.co.uk>
 #         Christopher J. Madsen <perl AT cjmweb.net>
@@ -19,8 +19,8 @@ package PostScript::File;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.02';          ## no critic
-# This file is part of PostScript-File 2.02 (December 24, 2010)
+our $VERSION = '2.10';          ## no critic
+# This file is part of PostScript-File 2.10 (May 5, 2011)
 
 use strict;
 use warnings;
@@ -127,6 +127,9 @@ our @fonts = qw(
 );
 
 
+# 5.008-compatible version of defined-or:
+sub _def { for (@_) { return $_ if defined $_ } undef }
+
 sub new {
     my ($class, @options) = @_;
     my $opt = {};
@@ -171,7 +174,7 @@ sub new {
     ## Paper layout
     croak "PNG output is no longer supported.  Use PostScript::Convert instead"
         if $opt->{png};
-    $o->{eps}   = defined($opt->{eps})  ? $opt->{eps}  : 0;
+    $o->{eps}      = !!$opt->{eps} + 0;
     $o->{file_ext} = $opt->{file_ext};
     $o->set_filename(@$opt{qw(file dir)});
     $o->set_paper( $opt->{paper} );
@@ -182,51 +185,51 @@ sub new {
     ## Debug options
     $o->{debug} = $opt->{debug};        # undefined is an option
     if ($o->{debug}) {
-        $o->{db_active}   = $opt->{db_active}   || 1;
-        $o->{db_bufsize}  = $opt->{db_bufsize}  || 256;
-        $o->{db_font}     = $opt->{db_font}     || "Courier";
-        $o->{db_fontsize} = $opt->{db_fontsize} || 10;
-        $o->{db_ytop}     = $opt->{db_ytop}     || ($o->{bbox}[3] - $o->{db_fontsize} - 6);
-        $o->{db_ybase}    = $opt->{db_ybase}    || 6;
-        $o->{db_xpos}     = $opt->{db_xpos}     || 6;
-        $o->{db_xtab}     = $opt->{db_xtab}     || 10;
-        $o->{db_xgap}     = $opt->{db_xgap}     || ($o->{bbox}[2] - $o->{bbox}[0] - $o->{db_xpos})/4;
-        $o->{db_color}    = $opt->{db_color}    || "0 setgray";
+        $o->{db_active}   = _def($opt->{db_active},   1);
+        $o->{db_bufsize}  = _def($opt->{db_bufsize},  256);
+        $o->{db_font}     = _def($opt->{db_font},     "Courier");
+        $o->{db_fontsize} = _def($opt->{db_fontsize}, 10);
+        $o->{db_ytop}     = _def($opt->{db_ytop},     ($o->{bbox}[3] - $o->{db_fontsize} - 6));
+        $o->{db_ybase}    = _def($opt->{db_ybase},    6);
+        $o->{db_xpos}     = _def($opt->{db_xpos},     6);
+        $o->{db_xtab}     = _def($opt->{db_xtab},     10);
+        $o->{db_xgap}     = _def($opt->{db_xgap},     ($o->{bbox}[2] - $o->{bbox}[0] - $o->{db_xpos})/4);
+        $o->{db_color}    = _def($opt->{db_color},    "0 setgray");
     }
 
     ## Bounding box
-    my $x0 = $o->{bbox}[0] + ($opt->{left} || 28);
-    my $y0 = $o->{bbox}[1] + ($opt->{bottom} || 28);
-    my $x1 = $o->{bbox}[2] - ($opt->{right} || 28);
-    my $y1 = $o->{bbox}[3] - ($opt->{top} || 28);
+    my $x0 = $o->{bbox}[0] + _def($opt->{left},  28);
+    my $y0 = $o->{bbox}[1] + _def($opt->{bottom},  28);
+    my $x1 = $o->{bbox}[2] - _def($opt->{right},  28);
+    my $y1 = $o->{bbox}[3] - _def($opt->{top},  28);
     $o->set_bounding_box( $x0, $y0, $x1, $y1 );
-    $o->set_clipping( $opt->{clipping} || 0 );
+    $o->set_clipping( $opt->{clipping} );
 
     ## Other options
-    $o->{title}      = defined($opt->{title})        ? $opt->{title}        : undef;
-    $o->{version}    = defined($opt->{version})      ? $opt->{version}      : undef;
-    $o->{langlevel}  = defined($opt->{langlevel})    ? $opt->{langlevel}    : undef;
-    $o->{extensions} = defined($opt->{extensions})   ? $opt->{extensions}   : undef;
-    $o->{order}      = defined($opt->{order})        ? ucfirst lc $opt->{order} : undef;
+    $o->{title}      = $opt->{title};
+    $o->{version}    = $opt->{version};
+    $o->{langlevel}  = $opt->{langlevel};
+    $o->{extensions} = $opt->{extensions};
+    $o->{order}      = defined($opt->{order}) ? ucfirst lc $opt->{order} : undef;
     $o->set_page_label( $opt->{page} );
     $o->set_incpage_handler( $opt->{incpage_handler} );
 
-    $o->{errx}       = defined($opt->{errx})         ? $opt->{erry}         : 72;
-    $o->{erry}       = defined($opt->{erry})         ? $opt->{erry}         : 72;
-    $o->{errmsg}     = defined($opt->{errmsg})       ? $opt->{errmsg}       : "ERROR:";
-    $o->{errfont}    = defined($opt->{errfont})      ? $opt->{errfont}      : "Courier-Bold";
-    $o->{errsize}    = defined($opt->{errsize})      ? $opt->{errsize}      : 12;
+    $o->{errx}        = _def($opt->{errx},         72);
+    $o->{erry}        = _def($opt->{erry},         72);
+    $o->{errmsg}      = _def($opt->{errmsg},       "ERROR:");
+    $o->{errfont}     = _def($opt->{errfont},      "Courier-Bold");
+    $o->{errsize}     = _def($opt->{errsize},      12);
 
-    $o->{font_suffix} = defined($opt->{font_suffix})  ? $opt->{font_suffix}  : "-iso";
-    $o->{clipcmd}    = defined($opt->{clip_command}) ? $opt->{clip_command} : "clip";
-    $o->{errors}     = defined($opt->{errors})       ? $opt->{errors}       : 1;
-    $o->{headings}   = defined($opt->{headings})     ? $opt->{headings}     : 0;
+    $o->{font_suffix} = _def($opt->{font_suffix},  "-iso");
+    $o->{clipcmd}     = _def($opt->{clip_command}, "clip");
+    $o->{errors}      = _def($opt->{errors},       1);
+    $o->{headings}    = _def($opt->{headings},     0);
     $o->set_strip( $opt->{strip} );
     $o->_set_reencode( $opt->{reencode} );
-    $o->set_auto_hyphen(defined($opt->{auto_hyphen}) ? $opt->{auto_hyphen} : 1);
+    $o->set_auto_hyphen(_def($opt->{auto_hyphen}, 1));
     $o->need_resource(font => @{ $opt->{need_fonts} }) if $opt->{need_fonts};
 
-    $o->newpage( $o->get_page_label() );
+    $o->newpage if _def($opt->{newpage}, 1);
 
     ## Finish
     return $o;
@@ -237,7 +240,14 @@ sub new {
 sub newpage {
     my ($o, $page) = @_;
     my $oldpage = $o->{page}[$o->{p}];
-    my $newpage = defined($page) ? $page : &{$o->{incpage}}($oldpage);
+    # Don't use _def here, because we don't want to call
+    # incpage_handler if the user supplied a page label:
+    my $newpage = defined $page
+        ? $page
+        # If this is the very first page, don't increment the page number:
+        : ($o->{pagecount}
+           ? $o->{incpage}->($oldpage)
+           : $oldpage);
     my $p = $o->{p} = $o->{pagecount}++;
     $o->{page}[$p] = $newpage;
     $o->{pagebbox}[$p] = [ @{$o->{bbox}} ];
@@ -356,22 +366,25 @@ END_PS_ONLY
 END_LANDSCAPE
 
     my $clipfn = "";
-    $clipfn .= $o->_here_doc(<<END_CLIPPING) if ($clipping);
+    if ($clipping) {
+      my $clipcmd = $o->{clipcmd};
+      $clipcmd = "gsave 0 setgray 0.5 setlinewidth $clipcmd grestore newpath"
+          if $clipcmd eq 'stroke';
+
+      $clipfn .= $o->_here_doc(<<END_CLIPPING);
                 % Draw box as clipping path
                 % x0 y0 x1 y1 => _
                 /cliptobox {
                     4 dict begin
-                    gsave
-                    0 setgray
-                    0.5 setlinewidth
                     /y1 exch def /x1 exch def /y0 exch def /x0 exch def
                     newpath
                     x0 y0 moveto x0 y1 lineto x1 y1 lineto x1 y0 lineto
-                    closepath $o->{clipcmd}
-                    grestore
+                    closepath
+                    $clipcmd
                     end
                 } bind def
 END_CLIPPING
+    } # end if $clipping
 
     my $errorfn = "";
     if ($o->{errors}) {
@@ -793,6 +806,7 @@ END_DEBUG_END
                 \%\%EndPageSetup
 END_PAGE_SETUP
             $postscript .= $o->{Pages}->[$p];
+            $postscript =~ s/\n?\z/\n/; # Ensure LF at end
             $postscript .= $o->_here_doc(<<END_PAGE_TRAILER);
                 \%\%PageTrailer
                     $o->{PageTrailer}
@@ -988,7 +1002,7 @@ sub get_landscape {
 
 sub set_landscape {
     my $o = shift;
-    my $landscape = shift || 0;
+    my $landscape = (!!shift) + 0;
     $o->{landscape} = 0 unless (defined $o->{landscape});
     if ($o->{landscape} != $landscape) {
         $o->{landscape} = $landscape;
@@ -1004,7 +1018,7 @@ sub get_clipping {
 
 sub set_clipping {
     my $o = shift;
-    $o->{clipping} = shift || 0;
+    $o->{clipping} = (!!shift) + 0;
 }
 
 our %encoding_name = qw(
@@ -1237,7 +1251,7 @@ sub get_page_landscape {
 sub set_page_landscape {
     my $o = shift;
     my $p = (@_ == 2) ? $o->get_ordinal(shift) : $o->{p};
-    my $landscape = shift || 0;
+    my $landscape = (!!shift) + 0;
     $o->{pagelandsc}[$p] = 0 unless (defined $o->{pagelandsc}[$p]);
     if ($o->{pagelandsc}[$p] != $landscape) {
         ($o->{pagebbox}[$p][0], $o->{pagebbox}[$p][1]) = ($o->{pagebbox}[$p][1], $o->{pagebbox}[$p][0]);
@@ -1256,7 +1270,7 @@ sub get_page_clipping {
 sub set_page_clipping {
     my $o = shift;
     my $p = (@_ == 2) ? $o->get_ordinal(shift) : $o->{p};
-    $o->{pageclip}[$p] = shift || 0;
+    $o->{pageclip}[$p] = (!!shift) + 0;
 }
 
 
@@ -1320,6 +1334,18 @@ sub set_bounding_box {
 }
 
 
+sub get_printable_width
+{
+  my $bb = shift->{bbox};
+  return $bb->[2] - $bb->[0];
+} # end get_printable_width
+
+sub get_printable_height
+{
+  my $bb = shift->{bbox};
+  return $bb->[3] - $bb->[1];
+} # end get_printable_height
+
 sub get_page_bounding_box {
     my $o = shift;
     my $p = $o->get_ordinal( shift );
@@ -1336,6 +1362,20 @@ sub set_page_bounding_box {
     }
 }
 
+
+sub get_page_printable_width
+{
+  my $o = shift;
+  my $bb = $o->{pagebbox}[$o->get_ordinal( shift )];
+  return $bb->[2] - $bb->[0];
+} # end get_page_printable_width
+
+sub get_page_printable_height
+{
+  my $o = shift;
+  my $bb = $o->{pagebbox}[$o->get_ordinal( shift )];
+  return $bb->[3] - $bb->[1];
+} # end get_page_printable_height
 
 sub set_page_margins {
     my $o = shift;
@@ -1859,9 +1899,9 @@ PostScript::File - Base class for creating Adobe PostScript files
 
 =head1 VERSION
 
-This document describes version 2.02 of
-PostScript::File, released December 24, 2010
-as part of PostScript-File version 2.02.
+This document describes version 2.10 of
+PostScript::File, released May 5, 2011
+as part of PostScript-File version 2.10.
 
 =head1 SYNOPSIS
 
@@ -2350,6 +2390,27 @@ A few options that may be changed between pages or set here for the first page.
 
 Set the initial value for the function which increments page labels.  See L</set_incpage_handler>.
 
+=head3 newpage
+
+Normally, an initial page is created automatically (using the label
+specified by C<page>).  But starting with PostScript::File 2.10, you
+can pass S<C<< newpage => 0 >>> to override this.  This makes for more
+natural loops:
+
+    use PostScript::File 2.10;
+    my $ps = PostScript::File->new(newpage => 0);
+    for (@pages) {
+      $ps->newpage;  # don't need "unless first page"
+      ...
+    }
+
+It's important to require PostScript::File 2.10 if you do this, because
+older versions would produce an initial blank page.
+
+If you don't pass a page label to the first call to C<newpage>, it
+will be taken from the C<page> option.  After the first page, the page
+label will increment as specified by L</incpage_handler>.
+
 =head3 page
 
 Set the label (text or number) for the initial page.  See L</set_page_label>.  (Default: "1")
@@ -2547,7 +2608,16 @@ returns the new one.  Use this to increment pages using roman numerals or custom
 
 Inspect or change the bounding box for the whole document, showing only the area inside.
 
-Clipping is enabled.  Call with B<set_clipping> with 0 to stop clipping.
+Setting the bounding box enables clipping.  Call L</set_clipping> with
+0 afterwards to undo that.
+
+=head2 get_printable_width()
+
+=head2 get_printable_height()
+
+These return the width or height of the document's bounding box
+(S<C<x1 - x0>> or S<C<y1 - y0>>, respectively).  These methods were
+added in version 2.10.
 
 =head2 get_page_bounding_box( [page] )
 
@@ -2557,8 +2627,18 @@ Inspect or change the bounding box for a specified page.  If C<page> is not spec
 assumed, otherwise it should be a page label already given to B<newpage> or B<set_page_label>.  The page bounding
 box defaults to the paper area.
 
-Note that this automatically enables clipping for the page.  If this isn't what you want, call
-B<set_page_clipping> with 0.
+Note that calling C<set_page_bounding_box> automatically enables
+clipping for the page.  If this isn't what you want, call
+L</set_page_clipping> with 0 afterwards.
+
+=head2 get_page_printable_width( [page] )
+
+=head2 get_page_printable_height( [page] )
+
+These return the width or height of the specified page's bounding box
+(S<C<x1 - x0>> or S<C<y1 - y0>>, respectively).  If C<page> is not
+specified, the current page is assumed.  These methods were added in
+version 2.10.
 
 =head2 set_page_margins( [page], left, bottom, right, top )
 
@@ -3118,7 +3198,7 @@ L<http://github.com/madsen/postscript-file>.
 
 Copyright 2002, 2003 Christopher P Willmot.  All rights reserved.
 
-Copyright 2010 Christopher J. Madsen. All rights reserved.
+Copyright 2011 Christopher J. Madsen. All rights reserved.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

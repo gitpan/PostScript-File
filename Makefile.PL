@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { require 5.8.0; }
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
@@ -15,7 +15,7 @@ my %WriteMakefileArgs = (
     'Test::More' => '0.88'
   },
   'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+    'ExtUtils::MakeMaker' => '6.30'
   },
   'DISTNAME' => 'PostScript-File',
   'EXE_FILES' => [],
@@ -28,7 +28,7 @@ my %WriteMakefileArgs = (
     'Scalar::Util' => '0',
     'Sys::Hostname' => '0'
   },
-  'VERSION' => '2.02',
+  'VERSION' => '2.10',
   'test' => {
     'TESTS' => 't/*.t'
   }

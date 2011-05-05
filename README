@@ -1,4 +1,4 @@
-PostScript::File version 2.02, released December 24, 2010
+PostScript::File version 2.10, released May 5, 2011
 
 This module produces the outline for an Adobe PostScript file. It provides
 convenient routines for writing PostScript directly, including reporting
@@ -42,13 +42,21 @@ part of the standard Perl distribution:
 
 
 CHANGES
-    Here's what's new in version 2.02 of PostScript::File:
+    Here's what's new in version 2.10 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	- Revised the rules for hyphen-minus processing:
-	  If it's preceded by punctuation and followed by a digit, or
-	  it's followed by a currency symbol, it's a minus sign (U+2212).
-	- Clean up use of eval and properly localize $@
+	API improvements:
+
+	- You can pass "newpage => 0" to the constructor to prevent it
+	  from creating the first page.	 This leads to more natural
+	  loops, because you call newpage before each page (instead of
+	  "before each page except the first").
+	- Added get_printable_width, get_printable_height,
+	  get_page_printable_width, & get_page_printable_height methods
+
+	- Fixed bug: clipping never actually worked
+	- Fixed bug: errx parameter was not handled correctly in new
+	- Documentation fixes
 
 
 
