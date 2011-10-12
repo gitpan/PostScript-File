@@ -2,35 +2,40 @@
 use strict;
 use warnings;
 
-BEGIN { require 5.8.0; }
+use 5.008;
 
 use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Base class for creating Adobe PostScript files',
-  'AUTHOR' => 'Christopher J. Madsen <perl@cjmweb.net>',
-  'BUILD_REQUIRES' => {
-    'Test::More' => '0.88'
+  "ABSTRACT" => "Base class for creating Adobe PostScript files",
+  "AUTHOR" => "Christopher J. Madsen <perl\@cjmweb.net>",
+  "BUILD_REQUIRES" => {
+    "FindBin" => 0,
+    "List::Util" => 0,
+    "Test::More" => "0.88",
+    "charnames" => 0,
+    "constant" => 0
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.30'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'PostScript-File',
-  'EXE_FILES' => [],
-  'LICENSE' => 'perl',
-  'NAME' => 'PostScript::File',
-  'PREREQ_PM' => {
-    'Carp' => '0',
-    'Encode' => '2.21',
-    'File::Spec' => '0',
-    'Scalar::Util' => '0',
-    'Sys::Hostname' => '0'
+  "DISTNAME" => "PostScript-File",
+  "EXE_FILES" => [],
+  "LICENSE" => "perl",
+  "NAME" => "PostScript::File",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "Encode" => "2.21",
+    "Exporter" => 0,
+    "File::Spec" => 0,
+    "Scalar::Util" => 0,
+    "Sys::Hostname" => 0
   },
-  'VERSION' => '2.10',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "2.11",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

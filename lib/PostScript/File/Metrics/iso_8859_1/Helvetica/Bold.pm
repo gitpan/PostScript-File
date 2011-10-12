@@ -6,7 +6,7 @@
 package PostScript::File::Metrics::iso_8859_1::Helvetica::Bold;
 
 our $VERSION = '2.01';
-# This file is part of PostScript-File 2.10 (May 5, 2011)
+# This file is part of PostScript-File 2.11 (October 11, 2011)
 
 $PostScript::File::Metrics::Info{'Helvetica-Bold'} ||= {
   'ascender' => 718,

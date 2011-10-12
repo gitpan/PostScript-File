@@ -18,12 +18,12 @@ package PostScript::File::Metrics;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.02';          ## no critic
-# This file is part of PostScript-File 2.10 (May 5, 2011)
+our $VERSION = '2.11';          ## no critic
+# This file is part of PostScript-File 2.11 (October 11, 2011)
 
 use strict;
 use warnings;
-use Carp 'croak';
+use Carp qw(carp croak);
 use Encode qw(find_encoding);
 
 use PostScript::File ':metrics_methods'; # Import some methods
@@ -129,6 +129,7 @@ sub new
           unless $encoding =~ /^(?:std|sym)$/;
   $self->set_auto_hyphen(1);
   $self->set_size($size);
+  $self->set_wrap_chars;
 } # end new
 #---------------------------------------------------------------------
 
@@ -170,33 +171,71 @@ sub wrap
 {
   my $self  = shift;
   my $width = shift;
-  my $text  = $self->encode_text(
-    $self->{auto_hyphen} ? $self->convert_hyphens(shift) : shift
+  my $text  = shift;
+  my %param = @_ ? %{+shift} : ();
+
+  my $maxlines = delete $param{maxlines};
+  my $quiet    = delete $param{quiet};
+  my $warnings = delete $param{warnings};
+  my $re       = (exists($param{chars})
+                  ? $self->_build_wrap_re(delete $param{chars})
+                  : $self->{wrap_re});
+
+  carp "Unknown wrap parameter(s) @{[ keys %param ]}" if %param;
+
+  # Remove CRs; convert ZWSP to CR:
+  $text =~ s/\r//g;
+  $text =~ s/\x{200B}/\r/g if Encode::is_utf8($text);
+
+  $text  = $self->encode_text(
+    $self->{auto_hyphen} ? $self->convert_hyphens($text) : $text
   );
 
+  # Do word wrapping:
   my @lines = '';
 
   for ($text) {
-    if (m/\G[ \t]*\n/gc) {
+    if (m/\G[ \t\r]*\n/gc) {
       push @lines, '';
     } else {
-      m/\G(\s*(?:[^-\s]+-*|\S+))/g or last;
+      m/\G($re)/g or last;
       my $word = $1;
     check_word:
       if ($self->width($lines[-1] . $word, 1) <= $width) {
         $lines[-1] .= $word;
       } elsif ($lines[-1] eq '') {
         $lines[-1] = $word;
-        warn "$word is too wide for field width $width";
+        my $w = sprintf("%s is too wide (%g) for field width %g",
+                        $word, $self->width($word, 1), $width);
+        push @$warnings, $w if $warnings;
+        carp $w unless $quiet;
       } else {
         push @lines, '';
-        $word =~ s/^\s+//;
+        $word =~ s/^[ \t\r]+//;
         goto check_word;
       }
     } # end else not at LF
 
+    if (defined $maxlines and @lines >= $maxlines) {
+      $lines[-1] .= $1 if m/\G(.*[^ \t\r\n])/sg;
+      if (($warnings or not $quiet) and
+          (my $linewidth = $self->width($lines[-1], 1)) > $width) {
+        my $w = sprintf("'%s' is too wide (%g) for field width %g",
+                        $lines[-1], $linewidth, $width);
+        push @$warnings, $w if $warnings;
+        carp $w unless $quiet;
+      } # end if issuing warning about last line
+      last;
+    } # end if reached maximum number of lines
+
     redo;                   # Only the "last" statement above can exit
   } # end for $text
+
+  # Remove any remaining CR (ZWSP) chars:
+  s/\r//g for @lines;
+
+  # Remove the last line if it's blank ($text ended with newline):
+  pop @lines unless @lines == 1 or length $lines[-1];
 
   if ($self->{auto_hyphen}) {
     # At this point, any hyphen-minus characters are unambiguously
@@ -206,6 +245,51 @@ sub wrap
     @lines;
   }
 } # end wrap
+#---------------------------------------------------------------------
+
+
+sub set_wrap_chars
+{
+  my $self = shift;
+
+  $self->{wrap_re} = $self->_build_wrap_re(@_);
+
+  $self;
+} # end set_wrap_chars
+
+#---------------------------------------------------------------------
+our %_wrap_re_cache;
+
+sub _build_wrap_re
+{
+  my ($self, $chars) = @_;
+
+  if (not defined $chars) {
+    $chars = '-/';
+    if ($self->{encoding}) {
+      $chars .= "\xAD";
+      # Only cp1252 has en dash & em dash:
+      $chars .= "\x{2013}\x{2014}" if $self->{encoding}->name eq 'cp1252';
+    }
+  } # end if $chars not supplied (use default)
+
+  $chars = $self->encode_text($chars);
+
+  return $_wrap_re_cache{$chars} ||= do {
+    if (length $chars) {
+      $chars =~ s/(.)/ sprintf '\x%02X', ord $1 /seg;
+
+      qr(
+        [ \t\r]*
+        (?: [^$chars \t\r\n]+ |
+            [$chars]+ [^$chars \t\r\n]* )
+        [$chars]*
+      )x;
+    } else {
+      qr( [ \t\r]*  [^ \t\r\n]+ )x;
+    }
+  };
+} # end _build_wrap_re
 
 #---------------------------------------------------------------------
 # Return the package in which the font's metrics are stored:
@@ -235,9 +319,9 @@ PostScript::File::Metrics - Metrics for PostScript fonts
 
 =head1 VERSION
 
-This document describes version 2.02 of
-PostScript::File::Metrics, released May 5, 2011
-as part of PostScript-File version 2.10.
+This document describes version 2.11 of
+PostScript::File::Metrics, released October 11, 2011
+as part of PostScript-File version 2.11.
 
 =head1 SYNOPSIS
 
@@ -420,6 +504,19 @@ attributes that concern dimensions and the string width calculations.
 It returns the Metrics object, so you can chain to the next method.
 
 
+=head2 set_wrap_chars
+
+  $metrics->set_wrap_chars($new_chars)
+
+This method (introduced in version 2.11) sets the characters after
+which a word can be wrapped.  A line can wrap after any character in
+C<$new_chars>, which I<should not> include whitespace.  Whitespace is
+always a valid breakpoint.  If C<$new_chars> is omitted or C<undef>,
+restores the default wrap characters, which means C<-/> and (if using
+cp1252) both en and em dashes.  It returns the Metrics object, so you
+can chain to the next method.
+
+
 =head2 width
 
   $width = $metrics->width($string, [$already_encoded])
@@ -437,7 +534,7 @@ also prevents any hyphen-minus processing.
 
 =head2 wrap
 
-  @lines = $metrics->wrap($width, $text)
+  @lines = $metrics->wrap($width, $text, [\%param])
 
 This wraps C<$text> into lines of no more than C<$width> points.  If
 C<$text> contains newlines, they will also cause line breaks.  If
@@ -448,6 +545,45 @@ character set already.
 If the C<auto_hyphen> attribute is true, then any HYPHEN-MINUS
 (U+002D) characters in C<$text> will be converted to either HYPHEN
 (U+2010) or MINUS SIGN (U+2212) in the returned strings.
+
+The characters after which a line can wrap (other than space and tab,
+which are always valid line breaks) can be set with the
+C<set_wrap_chars> method.  In addition, C<$text> may contain ZERO
+WIDTH SPACE (U+200B) characters to indicate potential line breaks.
+All ZWSP characters and CRs will be removed from the returned strings.
+C<$text> may also contain NO-BREAK SPACE (U+00A0) characters, which
+indicate whitespace without a potential line break.
+
+The optional C<\%param> (introduced in version 2.11) allows additional
+control over the wrapping.  It may contain the following keys:
+
+=over
+
+=item chars
+
+This overrides the line-breaking characters normally set by the
+C<set_wrap_chars> method.  The value has the same meaning as for
+C<set_wrap_chars>.
+
+=item maxlines
+
+The maximum number of lines to return.  The final line will contain
+all the remaining text, even if that exceeds C<$width> or contains
+newline characters.
+
+=item quiet
+
+If true, do not warn about words that are too wide to fit in the
+specified C<$width>.
+
+=item warnings
+
+If present, must be an arrayref.  Warning messages about words that
+are too wide to fit in the specified C<$width> will be pushed onto the
+array.  You should also pass S<C<< quiet => 1 >>> if you don't want
+the warnings printed to STDERR.
+
+=back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 

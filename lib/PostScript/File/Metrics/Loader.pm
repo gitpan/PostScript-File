@@ -19,7 +19,7 @@ package PostScript::File::Metrics::Loader;
 
 use 5.008;
 our $VERSION = '2.02';          ## no critic
-# This file is part of PostScript-File 2.10 (May 5, 2011)
+# This file is part of PostScript-File 2.11 (October 11, 2011)
 
 use strict;
 use warnings;
@@ -258,8 +258,8 @@ PostScript::File::Metrics::Loader - Load metrics for PostScript fonts using Font
 =head1 VERSION
 
 This document describes version 2.02 of
-PostScript::File::Metrics::Loader, released May 5, 2011
-as part of PostScript-File version 2.10.
+PostScript::File::Metrics::Loader, released October 11, 2011
+as part of PostScript-File version 2.11.
 
 =head1 DESCRIPTION
 

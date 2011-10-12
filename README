@@ -1,4 +1,4 @@
-PostScript::File version 2.10, released May 5, 2011
+PostScript::File version 2.11, released October 11, 2011
 
 This module produces the outline for an Adobe PostScript file. It provides
 convenient routines for writing PostScript directly, including reporting
@@ -32,9 +32,10 @@ part of the standard Perl distribution:
 
   Package        Minimum Version
   -------------- ---------------
-  perl            5.8.0
+  perl            5.008
   Carp            
   Encode          2.21
+  Exporter        
   File::Spec      
   Scalar::Util    
   Sys::Hostname
@@ -42,21 +43,19 @@ part of the standard Perl distribution:
 
 
 CHANGES
-    Here's what's new in version 2.10 of PostScript::File:
+    Here's what's new in version 2.11 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	API improvements:
+	Improvements to word wrapping provided by Metrics objects:
 
-	- You can pass "newpage => 0" to the constructor to prevent it
-	  from creating the first page.	 This leads to more natural
-	  loops, because you call newpage before each page (instead of
-	  "before each page except the first").
-	- Added get_printable_width, get_printable_height,
-	  get_page_printable_width, & get_page_printable_height methods
-
-	- Fixed bug: clipping never actually worked
-	- Fixed bug: errx parameter was not handled correctly in new
-	- Documentation fixes
+	- Added optional \%param to wrap method
+	- Added set_wrap_chars method
+	- You can now use ZERO WIDTH SPACE (U+200B) to allow breaking
+	  a line at any point.
+	- Fixed bug: wrap method didn't wrap after hyphens.
+	  By default, it now wraps after hyphens, dashes, and forward
+	  slashes.
+	- Word wrapping now has tests
 
 
 

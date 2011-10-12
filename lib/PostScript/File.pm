@@ -19,8 +19,8 @@ package PostScript::File;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.10';          ## no critic
-# This file is part of PostScript-File 2.10 (May 5, 2011)
+our $VERSION = '2.11';          ## no critic
+# This file is part of PostScript-File 2.11 (October 11, 2011)
 
 use strict;
 use warnings;
@@ -1116,7 +1116,7 @@ sub _set_reencode
   $o->{reencode} = $encoding_name{$encoding}
       or croak "Invalid reencode setting $encoding";
 
-  require Encode;  Encode->VERSION(2.12); # Need coderef for CHECK
+  require Encode;  Encode->VERSION(2.21); # Need mime_name method
   $o->{encoding} = Encode::find_encoding($encoding)
       or croak "Can't find encoding $encoding";
 } # end _set_reencode
@@ -1899,9 +1899,9 @@ PostScript::File - Base class for creating Adobe PostScript files
 
 =head1 VERSION
 
-This document describes version 2.10 of
-PostScript::File, released May 5, 2011
-as part of PostScript-File version 2.10.
+This document describes version 2.11 of
+PostScript::File, released October 11, 2011
+as part of PostScript-File version 2.11.
 
 =head1 SYNOPSIS
 
