@@ -1,4 +1,4 @@
-PostScript::File version 2.11, released October 11, 2011
+PostScript::File version 2.20, released February 11, 2012
 
 This module produces the outline for an Adobe PostScript file. It provides
 convenient routines for writing PostScript directly, including reporting
@@ -35,7 +35,7 @@ part of the standard Perl distribution:
   perl            5.008
   Carp            
   Encode          2.21
-  Exporter        
+  Exporter        5.57
   File::Spec      
   Scalar::Util    
   Sys::Hostname
@@ -43,19 +43,31 @@ part of the standard Perl distribution:
 
 
 CHANGES
-    Here's what's new in version 2.11 of PostScript::File:
+    Here's what's new in version 2.20 of PostScript::File:
     (See the file "Changes" for the full revision history.)
 
-	Improvements to word wrapping provided by Metrics objects:
+	API improvements:
 
-	- Added optional \%param to wrap method
-	- Added set_wrap_chars method
-	- You can now use ZERO WIDTH SPACE (U+200B) to allow breaking
-	  a line at any point.
-	- Fixed bug: wrap method didn't wrap after hyphens.
-	  By default, it now wraps after hyphens, dashes, and forward
-	  slashes.
-	- Word wrapping now has tests
+	- Added use_functions method, which selects functions from a
+	  library provided by new module PostScript::File::Functions.
+	- Added set_min_langlevel method
+	- Added all_comments strip type
+	- Renamed methods add_function, get_functions, & has_function
+	  to add_procset, get_procsets, & has_procset.	The old names
+	  are still available for backwards compatibility, but their
+	  use is deprecated.
+
+	- Multi-line string literals are now protected from
+	  comment/whitespace stripping.
+	- Fixed bug: add_preview might strip the preview
+	- Fixed bug: check_tilde treated "0" like the empty string
+	- Private methods bbox_comment, pre_pages, post_pages, &
+	  print_file were renamed.  You shouldn't have been using them
+	  anyway.
+	- The get_ordinal method is now private.  While it was
+	  formerly documented, it unnecessarily exposed the internals
+	  and had no real use.
+	- The documentation has been cleaned up.
 
 
 

@@ -11,17 +11,17 @@ BEGIN {
 
 use Test::More;
 
-eval "use Test::Pod::Coverage 1.04";
-plan skip_all => "Test::Pod::Coverage 1.04 required for testing POD coverage"
-    if $@;
+eval "use Test::Pod::Coverage 1.08; 1"
+or plan skip_all => "Test::Pod::Coverage 1.08 required for testing POD coverage";
 
-plan tests => 3;
+eval "use Pod::Coverage::TrustPod 0.100001; 1"
+or plan skip_all => "Pod::Coverage::TrustPod 0.100001 required for testing POD coverage";
 
-TODO: {
-  local $TODO = "documentation unfinished";
+my $opts = { coverage_class => 'Pod::Coverage::TrustPod' };
 
-  pod_coverage_ok('PostScript::File');
-}
+plan tests => 4;
 
-pod_coverage_ok('PostScript::File::Metrics');
-pod_coverage_ok('PostScript::File::Metrics::Loader');
+pod_coverage_ok('PostScript::File', $opts);
+pod_coverage_ok('PostScript::File::Functions', $opts);
+pod_coverage_ok('PostScript::File::Metrics', $opts);
+pod_coverage_ok('PostScript::File::Metrics::Loader', $opts);

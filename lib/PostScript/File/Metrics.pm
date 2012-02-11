@@ -19,7 +19,7 @@ package PostScript::File::Metrics;
 
 use 5.008;
 our $VERSION = '2.11';          ## no critic
-# This file is part of PostScript-File 2.11 (October 11, 2011)
+# This file is part of PostScript-File 2.20 (February 11, 2012)
 
 use strict;
 use warnings;
@@ -320,8 +320,8 @@ PostScript::File::Metrics - Metrics for PostScript fonts
 =head1 VERSION
 
 This document describes version 2.11 of
-PostScript::File::Metrics, released October 11, 2011
-as part of PostScript-File version 2.11.
+PostScript::File::Metrics, released February 11, 2012
+as part of PostScript-File version 2.20.
 
 =head1 SYNOPSIS
 
@@ -601,17 +601,17 @@ No bugs have been reported.
 
 Christopher J. Madsen  S<C<< <perl AT cjmweb.net> >>>
 
-Please report any bugs or feature requests to
-S<C<< <bug-PostScript-File AT rt.cpan.org> >>>,
+Please report any bugs or feature requests
+to S<C<< <bug-PostScript-File AT rt.cpan.org> >>>
 or through the web interface at
-L<http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File>
+L<< http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File >>.
 
 You can follow or contribute to PostScript-File's development at
 L<< http://github.com/madsen/postscript-file >>.
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by Christopher J. Madsen.
+This software is copyright (c) 2012 by Christopher J. Madsen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

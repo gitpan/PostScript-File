@@ -9,14 +9,12 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Base class for creating Adobe PostScript files",
+  "ABSTRACT" => "Class for creating Adobe PostScript files",
   "AUTHOR" => "Christopher J. Madsen <perl\@cjmweb.net>",
   "BUILD_REQUIRES" => {
     "FindBin" => 0,
     "List::Util" => 0,
-    "Test::More" => "0.88",
-    "charnames" => 0,
-    "constant" => 0
+    "Test::More" => "0.88"
   },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
@@ -28,12 +26,12 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Carp" => 0,
     "Encode" => "2.21",
-    "Exporter" => 0,
+    "Exporter" => "5.57",
     "File::Spec" => 0,
     "Scalar::Util" => 0,
     "Sys::Hostname" => 0
   },
-  "VERSION" => "2.11",
+  "VERSION" => "2.20",
   "test" => {
     "TESTS" => "t/*.t"
   }

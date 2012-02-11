@@ -16,6 +16,7 @@ examples/iso-8859-1.pl
 examples/minimal.pl
 examples/symbol.pl
 lib/PostScript/File.pm
+lib/PostScript/File/Functions.pm
 lib/PostScript/File/Metrics.pm
 lib/PostScript/File/Metrics/Loader.pm
 lib/PostScript/File/Metrics/cp1252/Courier.pm
@@ -55,6 +56,7 @@ lib/PostScript/File/Metrics/std/Times/BoldItalic.pm
 lib/PostScript/File/Metrics/std/Times/Italic.pm
 lib/PostScript/File/Metrics/std/Times/Roman.pm
 lib/PostScript/File/Metrics/sym/Symbol.pm
+t/00-all_prereqs.t
 t/00-load.t
 t/10-simple.t
 t/20-eps.t

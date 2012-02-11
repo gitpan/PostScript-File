@@ -18,12 +18,13 @@ package PostScript::File::Metrics::Loader;
 #---------------------------------------------------------------------
 
 use 5.008;
-our $VERSION = '2.02';          ## no critic
-# This file is part of PostScript-File 2.11 (October 11, 2011)
+our $VERSION = '2.20';          ## no critic
+# This file is part of PostScript-File 2.20 (February 11, 2012)
 
 use strict;
 use warnings;
 use Carp 'confess';
+# RECOMMEND PREREQ: Font::AFM
 use Font::AFM;
 use PostScript::File 2.00 ();
 
@@ -257,9 +258,9 @@ PostScript::File::Metrics::Loader - Load metrics for PostScript fonts using Font
 
 =head1 VERSION
 
-This document describes version 2.02 of
-PostScript::File::Metrics::Loader, released October 11, 2011
-as part of PostScript-File version 2.11.
+This document describes version 2.20 of
+PostScript::File::Metrics::Loader, released February 11, 2012
+as part of PostScript-File version 2.20.
 
 =head1 DESCRIPTION
 
@@ -279,6 +280,14 @@ them.
 
 =head1 SUBROUTINES
 
+=head2 get_encoding_vector
+
+  PostScript::File::Metrics::Loader::get_encoding_vector($encoding)
+
+This returns the encoding vector for C<$encoding>, an arrayref of 256
+glyph names.
+
+
 =head2 load
 
   PostScript::File::Metrics::Loader::load($font, \@encodings)
@@ -286,14 +295,6 @@ them.
 This uses Font::AFM to read the metrics for C<$font>, and creates
 width tables for each of the C<@encodings>.  The metrics are stored
 into the hashes used internally by PostScript::File::Metrics.
-
-
-=head2 get_encoding_vector
-
-  PostScript::File::Metrics::Loader::get_encoding_vector($encoding)
-
-This returns the encoding vector for C<$encoding>, an arrayref of 256
-glyph names.
 
 =head1 DIAGNOSTICS
 
@@ -381,17 +382,17 @@ No bugs have been reported.
 
 Christopher J. Madsen  S<C<< <perl AT cjmweb.net> >>>
 
-Please report any bugs or feature requests to
-S<C<< <bug-PostScript-File AT rt.cpan.org> >>>,
+Please report any bugs or feature requests
+to S<C<< <bug-PostScript-File AT rt.cpan.org> >>>
 or through the web interface at
-L<http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File>
+L<< http://rt.cpan.org/Public/Bug/Report.html?Queue=PostScript-File >>.
 
 You can follow or contribute to PostScript-File's development at
 L<< http://github.com/madsen/postscript-file >>.
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by Christopher J. Madsen.
+This software is copyright (c) 2012 by Christopher J. Madsen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

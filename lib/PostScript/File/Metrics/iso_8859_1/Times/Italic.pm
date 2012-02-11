@@ -6,7 +6,7 @@
 package PostScript::File::Metrics::iso_8859_1::Times::Italic;
 
 our $VERSION = '2.01';
-# This file is part of PostScript-File 2.11 (October 11, 2011)
+# This file is part of PostScript-File 2.20 (February 11, 2012)
 
 $PostScript::File::Metrics::Info{'Times-Italic'} ||= {
   'ascender' => 683,

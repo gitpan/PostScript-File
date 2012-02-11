@@ -1,5 +1,29 @@
 Revision history for Perl extension PostScript::File.
 
+2.20   February 11, 2012
+	API improvements:
+
+	- Added use_functions method, which selects functions from a
+	  library provided by new module PostScript::File::Functions.
+	- Added set_min_langlevel method
+	- Added all_comments strip type
+	- Renamed methods add_function, get_functions, & has_function
+	  to add_procset, get_procsets, & has_procset.	The old names
+	  are still available for backwards compatibility, but their
+	  use is deprecated.
+
+	- Multi-line string literals are now protected from
+	  comment/whitespace stripping.
+	- Fixed bug: add_preview might strip the preview
+	- Fixed bug: check_tilde treated "0" like the empty string
+	- Private methods bbox_comment, pre_pages, post_pages, &
+	  print_file were renamed.  You shouldn't have been using them
+	  anyway.
+	- The get_ordinal method is now private.  While it was
+	  formerly documented, it unnecessarily exposed the internals
+	  and had no real use.
+	- The documentation has been cleaned up.
+
 2.11   October 11, 2011
 	Improvements to word wrapping provided by Metrics objects:
 

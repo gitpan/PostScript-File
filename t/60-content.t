@@ -24,15 +24,20 @@ chdir $Bin or die "Unable to cd $Bin: $!";
 
 use Test::More;
 
-my $diff;
-BEGIN { $diff = eval "use Test::Differences; 1" }
-
-# Not all versions of Test::Differences support changing the style:
-eval { Test::Differences::unified_diff() };
+# Load Test::Differences, if available:
+BEGIN {
+  # SUGGEST PREREQ: Test::Differences
+  if (eval "use Test::Differences; 1") {
+    # Not all versions of Test::Differences support changing the style:
+    eval { Test::Differences::unified_diff() }
+  } else {
+    *eq_or_diff = \&is;         # Just use "is" instead
+  }
+} # end BEGIN
 
 use PostScript::File ();
 
-my $psVer = PostScript::File->VERSION;
+my $psVer = sprintf('%g', PostScript::File->VERSION);
 
 my $generateResults;
 
@@ -42,7 +47,7 @@ if (@ARGV and $ARGV[0] eq 'gen') {
   open(OUT, '>', '/tmp/60-content.t') or die $!;
   printf OUT "#%s\n\n__DATA__\n", '=' x 69;
 } else {
-  plan tests => 20 * 3;
+  plan tests => 24 * 3;
 }
 
 my ($name, %param, @methods);
@@ -66,8 +71,8 @@ while (<DATA>) {
       $expected .= $_;
     }
 
-    $expected =~ s{procset PostScript_File 0 0}
-                  {procset PostScript_File $psVer 0}g;
+    $expected =~ s{(procset PostScript_File(?:[-_]\S+)?) 0 0}
+                  {$1 $psVer 0}g;
 
     # Run the test:
     my $ps = PostScript::File->new(%param);
@@ -81,20 +86,15 @@ while (<DATA>) {
       $expected = $ps->output;
 
       # Suppress version numbers:
-      $expected =~ s{procset PostScript_File \Q$psVer\E 0}
-                    {procset PostScript_File 0 0}g;
+      $expected =~ s{(procset PostScript_File(?:[-_]\S+)?) \Q$psVer\E 0}
+                    {$1 0 0}g;
 
       print OUT "$expected---\n";
-    } elsif ($diff) {
-      eq_or_diff($ps->output, $expected, $name); # if Test::Differences
+    } else {
+      eq_or_diff($ps->output, $expected, $name);
       # Calling output again should produce exactly the same output:
       eq_or_diff($ps->output, $expected, "repeat $name");
       eq_or_diff(output_to_fh($ps), $expected, "$name to filehandle");
-    } else {
-      is($ps->output, $expected, $name); # fall back to Test::More
-      # Calling output again should produce exactly the same output:
-      is($ps->output, $expected, "repeat $name");
-      is(output_to_fh($ps), $expected, "$name to filehandle");
     }
 
     # Clean up:
@@ -106,7 +106,7 @@ while (<DATA>) {
     $name = $1;
   } # end elsif test name (:: name)
   else {
-    die "Unrecognized line $_" if /\S/;
+    die "Unrecognized line $_" if /\S/ and not /^# /;
   }
 } # end while <DATA>
 
@@ -1658,3 +1658,146 @@ pagelevel restore
 showpage
 %%EOF
 ---
+
+
+:: use functions
+errors: 0
+paper: 'Letter'
+->use_functions(qw(drawBox));
+===
+%!PS-Adobe-3.0
+%%Orientation: Portrait
+%%DocumentSuppliedResources:
+%%+ procset PostScript_File_Functions-BD 0 0
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset PostScript_File_Functions-BD 0 0
+/boxPath
+{
+newpath
+2 copy moveto
+3 index exch lineto
+1 index
+4 2 roll
+lineto
+lineto
+closepath
+} bind def
+/drawBox { boxPath stroke } bind def
+%%EndResource
+%%EndProlog
+%%Page: 1 1
+%%PageBoundingBox: 28 28 584 764
+%%BeginPageSetup
+/pagelevel save def
+userdict begin
+%%EndPageSetup
+%%PageTrailer
+end
+pagelevel restore
+showpage
+%%EOF
+---
+
+
+:: use more functions
+errors: 0
+paper: 'Letter'
+->use_functions(qw(clipBox));
+->use_functions(qw(setColor));
+===
+%!PS-Adobe-3.0
+%%Orientation: Portrait
+%%DocumentSuppliedResources:
+%%+ procset PostScript_File_Functions-ABC 0 0
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset PostScript_File_Functions-ABC 0 0
+/setColor
+{
+dup type (arraytype) eq {
+aload pop
+setrgbcolor
+}{
+setgray
+} ifelse
+} bind def
+/boxPath
+{
+newpath
+2 copy moveto
+3 index exch lineto
+1 index
+4 2 roll
+lineto
+lineto
+closepath
+} bind def
+/clipBox { boxPath clip } bind def
+%%EndResource
+%%EndProlog
+%%Page: 1 1
+%%PageBoundingBox: 28 28 584 764
+%%BeginPageSetup
+/pagelevel save def
+userdict begin
+%%EndPageSetup
+%%PageTrailer
+end
+pagelevel restore
+showpage
+%%EOF
+---
+
+
+:: preview
+errors: 0
+eps: 1
+paper: 'Letter'
+strip: 'comments'
+->add_preview(1,2,3,4, "%line1\n%line2\n");
+===
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 28 28 584 764
+%%Orientation: Portrait
+%%EndComments
+%%BeginPreview: 1 2 3 4
+%line1
+%line2
+%%EndPreview
+%%BeginProlog
+%%EndProlog
+userdict begin
+end
+%%EOF
+---
+
+
+:: preview with all_comments
+errors: 0
+eps: 1
+strip: 'all_comments'
+paper: 'Letter'
+->add_preview(1,2,3,4, "%line1\n%line2\n");
+->add_to_page("(testing) show %comment\n");
+===
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 28 28 584 764
+%%Orientation: Portrait
+%%EndComments
+%%BeginPreview: 1 2 3 4
+%line1
+%line2
+%%EndPreview
+%%BeginProlog
+%%EndProlog
+userdict begin
+(testing) show
+end
+%%EOF
+---
+
+# Local Variables:
+# coding: windows-1252
+# compile-command: "perl 60-content.t gen"
+# End:
